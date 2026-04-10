@@ -1,0 +1,9 @@
+.leftPanel {
+  width: 484px;
+  flex-shrink: 0;
+  height: 100%;
+  background: #0d1117;
+  border-right: 1px solid #1f2937;
+  position: relative;
+  overflow: hidden;
+}
