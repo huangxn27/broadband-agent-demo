@@ -54,8 +54,6 @@ TeamToolCallStarted (delegate)        → step_start    步骤卡立刻出现，
 TeamToolCallCompleted (delegate)      → step_end      步骤卡打勾
 ```
 
-skill 执行期间步骤卡内无 sub_step，前端在 `step_start` 到第一个 `sub_step` 之间显示 loading 占位，`sub_step` 到来时替换。
-
 ### step / sub_step 字段说明
 
 - **step** = SubAgent 被激活（`delegate_task_to_member` 一次调用）
@@ -77,12 +75,22 @@ skill 执行期间步骤卡内无 sub_step，前端在 `step_start` 到第一个
 
 ### render 事件
 
-**insight 场景**：`data_insight` 和 `report_rendering` 的产物分散在多次 `ToolCallCompleted` 中，Event Adapter 需在服务端缓存聚合，待 `InsightAgent` 的 `step_end` 触发后一次性发出：
+**insight 场景**：InsightAgent 运行 `Plan→Decompose→Execute→Reflect→Report` 五阶段。产出可视化内容的 skill 如下：
+
+| skill | 产出 | 字段 |
+|---|---|---|
+| `insight_query` | ECharts 图表 | `chart_configs`（完整 ECharts option）+ `description` + `significance` |
+| `insight_report` | Markdown 报告 | stdout 纯 Markdown 文本 |
+| `insight_plan` / `insight_decompose` / `insight_nl2code` / `insight_reflect` | 无可视化产出 | 忽略 |
+
+Event Adapter 在 insight step 期间缓存聚合，待 `InsightAgent` 的 `step_end` 触发后一次性发出：
 
 ```
 event: render
 data: { "renderType": "insight", "renderData": { "charts": [...], "markdownReport": "..." } }
 ```
+
+每个 chart 的结论由 `description`（人读摘要）+ `significance`（显著性 0~1）拼接生成。
 
 **image 场景**：Skill 生成图片文件后，后端存储并生成 `imageId`，通过 `/api/images/:imageId` 提供访问，随即发出：
 
@@ -146,13 +154,14 @@ backend/api/
 
 ## 5. 实施里程碑
 
-| 阶段 | 目标 | 完成标志 |
-|------|------|---------|
-| **M1** API 外壳 | FastAPI 服务跑通，REST 接口可调 | `GET /conversations` 返回空列表，前端能连上 |
-| **M2** 基础流 | SSE 跑通最简事件 | `thinking` / `text` / `done` / `error` 前端可渲染 |
-| **M3** 步骤卡 | 步骤面板真实联动 | `step_start` / `sub_step` / `step_end` 前端步骤卡正常展开 |
-| **M4** 右侧面板 | render 事件联动 | `insight` / `image` 右侧面板真实展示 |
-| **M5** 历史恢复 | 刷新不丢状态 | `GET /messages` 返回完整 Message，右侧渲染块可恢复 |
+| 阶段 | 目标 | 状态 |
+|------|------|------|
+| **M1** API 外壳 | FastAPI 服务跑通，REST 接口可调 | ✅ 完成 |
+| **M2** 基础流 | `thinking` / `text` / `done` / `error` 前端可渲染 | ✅ 完成 |
+| **M3** 步骤卡 | `step_start` / `sub_step` / `step_end` 前端步骤卡正常展开 | ✅ 完成 |
+| **M4** 右侧面板 | `render` 事件联动，insight / image 右侧面板真实展示 | ✅ 完成 |
+| **M5** 历史恢复 | `GET /messages` 返回完整 Message，右侧渲染块可恢复 | ✅ 完成 |
+| **M6** 前后端联调 | 前端关闭 Mock，Vite proxy 接真实后端 | ✅ 完成 |
 
 ---
 
@@ -164,7 +173,6 @@ backend/api/
 |------|------|
 | `backend/ui/app.py` | 后端团队持续迭代的 Gradio 入口 |
 | `backend/ui/chat_renderer.py` | Gradio 渲染逻辑 |
-| `backend/ui/session_state.py` | Gradio session 管理 |
 
 ### event_adapter.py 是重写，不是迁移
 
@@ -176,3 +184,17 @@ backend/api/
 |------|------|------|
 | Gradio UI | 7860 | 后端团队调试 |
 | FastAPI API | 8080 | 前后端正式对接 |
+
+### zss-backend subtree 同步
+
+后端代码通过 git subtree 纳入，remote 别名为 `zss-backend`：
+
+```bash
+# 拉取同事最新代码
+git subtree pull --prefix=backend zss-backend dev --squash
+
+# 将本地修改推回同事仓（需有写权限）
+git subtree push --prefix=backend zss-backend dev
+```
+
+`backend/api/` 和 `backend/scripts/` 是前端适配层，随 subtree 一起推送（方案 A，双方共同维护）。
