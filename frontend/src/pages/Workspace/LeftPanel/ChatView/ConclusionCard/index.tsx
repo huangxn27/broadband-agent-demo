@@ -14,6 +14,10 @@ interface Props {
 function ConclusionCard({ thinkingContent, thinkingDurationSec, content, streaming }: Props) {
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const hasThinking = !!thinkingContent && thinkingContent.trim().length > 0;
+  const hasContent = !!content && content.trim().length > 0;
+
+  // 流式开始但还没有任何内容时，不渲染空壳（否则显示为一条细线）
+  if (!hasThinking && !hasContent) return null;
 
   return (
     <div className={styles.card}>

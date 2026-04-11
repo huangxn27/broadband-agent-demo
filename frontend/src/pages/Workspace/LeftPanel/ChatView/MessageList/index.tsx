@@ -11,9 +11,10 @@ interface Props {
   messages: Message[];
   loading: boolean;
   isStreaming: boolean;
+  onEditMessage: (content: string) => void;
 }
 
-function MessageList({ messages, loading, isStreaming }: Props) {
+function MessageList({ messages, loading, isStreaming, onEditMessage }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // 自动滚到底部
@@ -53,7 +54,13 @@ function MessageList({ messages, loading, isStreaming }: Props) {
       <div className={styles.list}>
         {messages.map((msg) => {
           if (msg.role === 'user') {
-            return <UserBubble key={msg.id} content={msg.content} />;
+            return (
+              <UserBubble
+                key={msg.id}
+                content={msg.content}
+                onEdit={isStreaming ? undefined : onEditMessage}
+              />
+            );
           }
           return (
             <div key={msg.id} className={styles.assistantGroup}>

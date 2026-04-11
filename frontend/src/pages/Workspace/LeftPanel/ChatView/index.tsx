@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import { useConversationStore } from '@/store/conversationStore';
@@ -16,6 +16,8 @@ function ChatView() {
   const sendMessage = useWorkspaceStore((s) => s.sendMessage);
 
   const conversations = useConversationStore((s) => s.list);
+  const [editDraft, setEditDraft] = useState('');
+
   const title = useMemo(() => {
     if (!activeId) return '对话';
     return conversations.find((c) => c.id === activeId)?.title ?? '新对话';
@@ -48,10 +50,18 @@ function ChatView() {
           messages={messages}
           loading={messagesLoading}
           isStreaming={isStreaming}
+          onEditMessage={(content) => setEditDraft(content)}
         />
       </div>
 
-      <InputBubble disabled={isStreaming || !activeId} onSend={sendMessage} />
+      <InputBubble
+        disabled={isStreaming || !activeId}
+        onSend={(content, deepThinking) => {
+          setEditDraft('');
+          sendMessage(content, deepThinking);
+        }}
+        fillValue={editDraft}
+      />
     </div>
   );
 }

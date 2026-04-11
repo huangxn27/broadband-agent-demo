@@ -4,8 +4,43 @@
   padding: 0 8px;
 }
 
+.group {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 90%;
+}
+
+.group:not(:hover) .editBtn {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.editBtn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid #30363d;
+  background: #161b22;
+  color: #6b7280;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+  margin-bottom: 2px;
+}
+
+.editBtn:hover {
+  color: #1677ff;
+  border-color: #1677ff;
+}
+
 .bubble {
-  max-width: 78%;
+  max-width: 100%;
   padding: 10px 14px;
   background: #1677ff;
   color: #fff;
@@ -14,5 +49,4 @@
   line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
-  box-shadow: 0 2px 6px rgba(22, 119, 255, 0.2);
 }

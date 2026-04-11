@@ -1,4 +1,4 @@
-import { useState, KeyboardEvent } from 'react';
+import { useState, useEffect, KeyboardEvent } from 'react';
 import { SendOutlined, BulbOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import styles from './InputBubble.module.css';
@@ -6,11 +6,19 @@ import styles from './InputBubble.module.css';
 interface Props {
   disabled?: boolean;
   onSend: (content: string, deepThinking: boolean) => void;
+  fillValue?: string;
 }
 
-function InputBubble({ disabled, onSend }: Props) {
+function InputBubble({ disabled, onSend, fillValue }: Props) {
   const [value, setValue] = useState('');
   const [deepThinking, setDeepThinking] = useState(false);
+
+  // 外部填入（编辑历史消息）时同步到输入框
+  useEffect(() => {
+    if (fillValue !== undefined && fillValue !== '') {
+      setValue(fillValue);
+    }
+  }, [fillValue]);
 
   const canSend = value.trim().length > 0 && !disabled;
 
