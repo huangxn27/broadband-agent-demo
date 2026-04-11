@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { getMessages, sendMessageStream } from '@/api/messages';
 import { parseSseStream } from '@/utils/sseParser';
-import type { Message, Step, SubStep } from '@/types/message';
+import type { Message, Step, SubStep, MessageBlock } from '@/types/message';
 import type { RenderBlock } from '@/types/render';
 import type {
   DoneEvent,
@@ -45,6 +45,21 @@ function newId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** 从历史 message 重建 blocks（历史无顺序信息，按 thinking→steps→text 重建） */
+function rebuildBlocks(m: Message): MessageBlock[] {
+  const blocks: MessageBlock[] = [];
+  if (m.thinkingContent?.trim()) {
+    blocks.push({ type: 'thinking', content: m.thinkingContent });
+  }
+  for (const step of m.steps ?? []) {
+    blocks.push({ type: 'step', stepId: step.stepId });
+  }
+  if (m.content?.trim()) {
+    blocks.push({ type: 'text', content: m.content });
+  }
+  return blocks;
+}
+
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   leftView: 'list',
   activeConversationId: null,
@@ -58,7 +73,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   setActiveConversation: (id) => set({ activeConversationId: id }),
 
   openConversation: (id) => {
-    // 切换会话时清理流和渲染
     get().abortStream();
     set({
       leftView: 'chat',
@@ -77,8 +91,11 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     set({ messagesLoading: true });
     try {
       const resp = await getMessages(id);
-      const list = resp.list ?? [];
-      // 历史消息中如果有 renderBlocks，自动恢复最后一条 assistant 的最后一个渲染块
+      const list = (resp.list ?? []).map((m) => {
+        if (m.role !== 'assistant') return m;
+        return { ...m, blocks: rebuildBlocks(m) };
+      });
+      // 恢复右侧最后一条 renderBlock
       let lastRender: RenderBlock | null = null;
       for (let i = list.length - 1; i >= 0; i--) {
         const m = list[i];
@@ -108,7 +125,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       content,
       createdAt: new Date().toISOString(),
     };
-    // 2) 追加一条占位 assistant 消息（流式中）
+    // 2) 追加占位 assistant 消息（流式中）
     const assistantId = newId('msg_asst');
     const assistantMsg: Message = {
       id: assistantId,
@@ -118,6 +135,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       thinkingContent: '',
       steps: [],
       renderBlocks: [],
+      blocks: [],
       streaming: true,
       createdAt: new Date().toISOString(),
     };
@@ -149,21 +167,38 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           switch (e.event) {
             case 'thinking': {
               const d = e.data as ThinkingEvent;
-              updateAssistant((m) => ({
-                ...m,
-                thinkingContent: (m.thinkingContent ?? '') + d.delta,
-              }));
+              updateAssistant((m) => {
+                const blocks = m.blocks ?? [];
+                const last = blocks[blocks.length - 1];
+                const newBlocks: MessageBlock[] =
+                  last?.type === 'thinking'
+                    ? [...blocks.slice(0, -1), { type: 'thinking', content: last.content + d.delta }]
+                    : [...blocks, { type: 'thinking', content: d.delta }];
+                return { ...m, blocks: newBlocks, thinkingContent: (m.thinkingContent ?? '') + d.delta };
+              });
               break;
             }
             case 'text': {
               const d = e.data as TextEvent;
-              updateAssistant((m) => ({ ...m, content: m.content + d.delta }));
+              updateAssistant((m) => {
+                const blocks = m.blocks ?? [];
+                const last = blocks[blocks.length - 1];
+                const newBlocks: MessageBlock[] =
+                  last?.type === 'text'
+                    ? [...blocks.slice(0, -1), { type: 'text', content: last.content + d.delta }]
+                    : [...blocks, { type: 'text', content: d.delta }];
+                return { ...m, blocks: newBlocks, content: m.content + d.delta };
+              });
               break;
             }
             case 'step_start': {
               const d = e.data as StepStartEvent;
               const newStep: Step = { stepId: d.stepId, title: d.title, subSteps: [] };
-              updateAssistant((m) => ({ ...m, steps: [...(m.steps ?? []), newStep] }));
+              updateAssistant((m) => ({
+                ...m,
+                blocks: [...(m.blocks ?? []), { type: 'step', stepId: d.stepId }],
+                steps: [...(m.steps ?? []), newStep],
+              }));
               break;
             }
             case 'sub_step': {
@@ -175,6 +210,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
                 completedAt: d.completedAt,
                 durationMs: d.durationMs,
               };
+              // sub_step 只更新 steps[]，blocks 通过 stepId 引用无需改动
               updateAssistant((m) => ({
                 ...m,
                 steps: (m.steps ?? []).map((s) =>
@@ -184,7 +220,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
               break;
             }
             case 'step_end':
-              // 当前实现不做特殊处理，保留扩展位
               break;
             case 'render': {
               const block = e.data as RenderBlock;

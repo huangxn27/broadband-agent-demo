@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Empty, Skeleton } from 'antd';
 import type { Message } from '@/types/message';
 import UserBubble from '../UserBubble';
+import ThinkingBlock from '../ThinkingBlock';
 import StepCard from '../StepCard';
 import ConclusionCard from '../ConclusionCard';
 import ErrorCard from '../ErrorCard';
@@ -17,7 +18,6 @@ interface Props {
 function MessageList({ messages, loading, isStreaming, onEditMessage }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // 自动滚到底部
   useEffect(() => {
     const el = scrollRef.current;
     if (el) {
@@ -62,25 +62,41 @@ function MessageList({ messages, loading, isStreaming, onEditMessage }: Props) {
               />
             );
           }
+
+          // assistant：按 blocks 顺序渲染，保留流到达顺序
+          const blocks = msg.blocks ?? [];
           return (
             <div key={msg.id} className={styles.assistantGroup}>
-              {msg.steps?.map((step) => (
-                <StepCard key={step.stepId} step={step} />
-              ))}
-              {msg.error ? (
-                <ErrorCard message={msg.error} />
-              ) : (
-                <ConclusionCard
-                  thinkingContent={msg.thinkingContent}
-                  thinkingDurationSec={msg.thinkingDurationSec}
-                  content={msg.content}
-                  streaming={msg.streaming}
-                />
-              )}
+              {blocks.map((block, i) => {
+                if (block.type === 'thinking') {
+                  return (
+                    <ThinkingBlock
+                      key={`thinking-${i}`}
+                      content={block.content}
+                      durationSec={msg.thinkingDurationSec}
+                      streaming={msg.streaming}
+                    />
+                  );
+                }
+                if (block.type === 'step') {
+                  const step = (msg.steps ?? []).find((s) => s.stepId === block.stepId);
+                  return step ? <StepCard key={step.stepId} step={step} /> : null;
+                }
+                if (block.type === 'text') {
+                  return (
+                    <ConclusionCard
+                      key={`text-${i}`}
+                      content={block.content}
+                      streaming={msg.streaming}
+                    />
+                  );
+                }
+                return null;
+              })}
+              {msg.error && <ErrorCard message={msg.error} />}
             </div>
           );
         })}
-        {/* 流式占位（输入框已禁用，但留个底部空间） */}
         <div className={styles.bottomSpacer} />
       </div>
     </div>
