@@ -14,6 +14,7 @@ function ChatView() {
   const isStreaming = useWorkspaceStore((s) => s.isStreaming);
   const loadMessages = useWorkspaceStore((s) => s.loadMessages);
   const sendMessage = useWorkspaceStore((s) => s.sendMessage);
+  const abortStream = useWorkspaceStore((s) => s.abortStream);
 
   const conversations = useConversationStore((s) => s.list);
   const [editDraft, setEditDraft] = useState('');
@@ -50,13 +51,25 @@ function ChatView() {
           messages={messages}
           loading={messagesLoading}
           isStreaming={isStreaming}
-          onEditMessage={(content) => setEditDraft(content)}
+          onEditMessage={(content) => {
+            if (isStreaming) {
+              // 中止当前流，移除未完成的 assistant 消息
+              abortStream();
+              const { messages: msgs } = useWorkspaceStore.getState();
+              const last = msgs[msgs.length - 1];
+              if (last?.role === 'assistant' && last.streaming) {
+                useWorkspaceStore.setState({ messages: msgs.slice(0, -1) });
+              }
+            }
+            setEditDraft(content);
+          }}
         />
       </div>
 
       <InputBubble
-        disabled={isStreaming || !activeId}
+        disabled={!activeId}
         onSend={(content, deepThinking) => {
+          if (isStreaming) return;
           setEditDraft('');
           sendMessage(content, deepThinking);
         }}

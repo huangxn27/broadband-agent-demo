@@ -58,7 +58,7 @@ function MessageList({ messages, loading, isStreaming, onEditMessage }: Props) {
               <UserBubble
                 key={msg.id}
                 content={msg.content}
-                onEdit={isStreaming ? undefined : onEditMessage}
+                onEdit={onEditMessage}
               />
             );
           }
@@ -69,18 +69,25 @@ function MessageList({ messages, loading, isStreaming, onEditMessage }: Props) {
             <div key={msg.id} className={styles.assistantGroup}>
               {blocks.map((block, i) => {
                 if (block.type === 'thinking') {
+                  const isHistory = block.startedAt === 0;
+                  const durationSec = isHistory
+                    ? msg.thinkingDurationSec
+                    : block.endedAt
+                      ? Math.round((block.endedAt - block.startedAt) / 1000)
+                      : undefined;
                   return (
                     <ThinkingBlock
                       key={`thinking-${i}`}
                       content={block.content}
-                      durationSec={msg.thinkingDurationSec}
-                      streaming={msg.streaming}
+                      startedAt={isHistory ? undefined : block.startedAt}
+                      durationSec={durationSec}
+                      streaming={!isHistory && !block.endedAt && !!msg.streaming}
                     />
                   );
                 }
                 if (block.type === 'step') {
                   const step = (msg.steps ?? []).find((s) => s.stepId === block.stepId);
-                  return step ? <StepCard key={step.stepId} step={step} /> : null;
+                  return step ? <StepCard key={step.stepId} step={step} streaming={msg.streaming} /> : null;
                 }
                 if (block.type === 'text') {
                   return (
