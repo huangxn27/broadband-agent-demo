@@ -3,15 +3,33 @@ import type { RenderBlock } from './render';
 export interface SubStep {
   subStepId: string;
   name: string;
-  result: string;
+  scriptPath?: string;
+  callArgs?: string[];
+  stdout?: string;
+  stderr?: string;
   completedAt: string;
   durationMs: number;
 }
 
+/** step 内部有序渲染项：thinking 与 sub_step 按实际到达顺序穿插 */
+export type StepItem =
+  | {
+      type: 'thinking';
+      content: string;
+      startedAt: number;   // Date.now()，前端打点
+      endedAt?: number;    // 下一个 sub_step 或 step_end 到达时关闭
+    }
+  | { type: 'sub_step'; data: SubStep };
+
 export interface Step {
   stepId: string;
   title: string;
+  /** 有序渲染项，thinking 与 sub_step 穿插 */
+  items: StepItem[];
+  /** 仅用于显示步骤数量和历史重建 */
   subSteps: SubStep[];
+  /** step_end 事件到达后标记为 true */
+  completed?: boolean;
 }
 
 export type MessageRole = 'user' | 'assistant';
@@ -21,7 +39,7 @@ export type MessageRole = 'user' | 'assistant';
  * 渲染时直接遍历，保证 thinking / step / text 的视觉顺序与流顺序一致。
  */
 export type MessageBlock =
-  | { type: 'thinking'; content: string }
+  | { type: 'thinking'; content: string; startedAt: number; endedAt?: number }
   | { type: 'step'; stepId: string }
   | { type: 'text'; content: string };
 
