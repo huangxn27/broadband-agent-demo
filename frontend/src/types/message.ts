@@ -11,7 +11,7 @@ export interface SubStep {
   durationMs: number;
 }
 
-/** step 内部有序渲染项：thinking 与 sub_step 按实际到达顺序穿插 */
+/** step 内部有序渲染项：thinking、sub_step、text 按实际到达顺序穿插 */
 export type StepItem =
   | {
       type: 'thinking';
@@ -19,7 +19,8 @@ export type StepItem =
       startedAt: number;   // Date.now()，前端打点
       endedAt?: number;    // 下一个 sub_step 或 step_end 到达时关闭
     }
-  | { type: 'sub_step'; data: SubStep };
+  | { type: 'sub_step'; data: SubStep }
+  | { type: 'text'; content: string };
 
 export interface Step {
   stepId: string;

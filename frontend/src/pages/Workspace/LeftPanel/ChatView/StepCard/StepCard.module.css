@@ -349,3 +349,12 @@
   overflow-y: auto;
   background: transparent;
 }
+
+.inlineText {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #d1d5db;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

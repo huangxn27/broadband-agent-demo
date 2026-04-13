@@ -135,6 +135,13 @@ function StepCard({ step, defaultExpanded = true, streaming }: Props) {
                     />
                   );
                 }
+                if (item.type === 'text') {
+                  return (
+                    <div key={`text-${i}`} className={styles.inlineText}>
+                      {item.content}
+                    </div>
+                  );
+                }
                 const sub = item.data;
                 const isLast = i === step.items.length - 1;
                 const hasOutput = sub.stdout || sub.stderr;

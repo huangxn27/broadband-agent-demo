@@ -241,6 +241,23 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
             case 'text': {
               const d = e.data as TextEvent;
               updateAssistant((m) => {
+                const steps = m.steps ?? [];
+                const lastStep = steps[steps.length - 1];
+                // 有未结束的 step，text 写入 step 内部
+                if (lastStep && !lastStep.completed) {
+                  const newSteps = steps.map((s) => {
+                    if (s.stepId !== lastStep.stepId) return s;
+                    const items = s.items ?? [];
+                    const lastItem = items[items.length - 1];
+                    const newItems =
+                      lastItem?.type === 'text'
+                        ? [...items.slice(0, -1), { type: 'text' as const, content: lastItem.content + d.delta }]
+                        : [...items, { type: 'text' as const, content: d.delta }];
+                    return { ...s, items: newItems };
+                  });
+                  return { ...m, steps: newSteps, content: m.content + d.delta };
+                }
+                // 无活跃 step，追加到顶层 blocks
                 const blocks = m.blocks ?? [];
                 const last = blocks[blocks.length - 1];
                 const closedBlocks = last?.type === 'thinking' && !last.endedAt
