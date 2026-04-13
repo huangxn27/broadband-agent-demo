@@ -19,7 +19,8 @@ function InsightDisplay({ data }: Props) {
               ...chart.echartsOption,
               backgroundColor: 'transparent',
               textStyle: { color: '#9ca3af' },
-              grid: { left: 50, right: 20, top: 30, bottom: 40 },
+              // 后端已定义 grid 时尊重原值，否则补默认值
+              ...(!chart.echartsOption.grid && { grid: { left: 50, right: 20, top: 30, bottom: 40 } }),
             }}
             style={{ height: 320, width: '100%' }}
             opts={{ renderer: 'svg' }}
