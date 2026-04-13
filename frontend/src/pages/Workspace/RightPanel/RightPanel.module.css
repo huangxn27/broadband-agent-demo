@@ -9,14 +9,17 @@
   box-sizing: border-box;
 }
 
-.renderGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+.rowWrap {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+  margin-bottom: 12px;
 }
 
-.gridCell {
-  min-width: 0;
+.rowItems {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
 }
 
 /* markdown 报告独占整行，内容居中取双列宽度的 70% */
