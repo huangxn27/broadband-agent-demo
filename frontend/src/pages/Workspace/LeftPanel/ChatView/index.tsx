@@ -9,15 +9,19 @@ import styles from './ChatView.module.css';
 function ChatView() {
   const backToList = useWorkspaceStore((s) => s.backToList);
   const activeId = useWorkspaceStore((s) => s.activeConversationId);
-  const messages = useWorkspaceStore((s) => s.messages);
-  const messagesLoading = useWorkspaceStore((s) => s.messagesLoading);
-  const isStreaming = useWorkspaceStore((s) => s.isStreaming);
+  const messagesByConvId = useWorkspaceStore((s) => s.messagesByConvId);
+  const messagesLoadingConvIds = useWorkspaceStore((s) => s.messagesLoadingConvIds);
+  const streamingConvIds = useWorkspaceStore((s) => s.streamingConvIds);
   const loadMessages = useWorkspaceStore((s) => s.loadMessages);
   const sendMessage = useWorkspaceStore((s) => s.sendMessage);
   const abortStream = useWorkspaceStore((s) => s.abortStream);
 
   const conversations = useConversationStore((s) => s.list);
   const [editDraft, setEditDraft] = useState('');
+
+  const messages = activeId ? (messagesByConvId[activeId] ?? []) : [];
+  const messagesLoading = activeId ? messagesLoadingConvIds.has(activeId) : false;
+  const isStreaming = activeId ? streamingConvIds.has(activeId) : false;
 
   const title = useMemo(() => {
     if (!activeId) return '对话';
@@ -52,13 +56,18 @@ function ChatView() {
           loading={messagesLoading}
           isStreaming={isStreaming}
           onEditMessage={(content) => {
-            if (isStreaming) {
-              // 中止当前流，移除未完成的 assistant 消息
-              abortStream();
-              const { messages: msgs } = useWorkspaceStore.getState();
+            if (isStreaming && activeId) {
+              // 中止当前会话的流，移除未完成的 assistant 消息
+              abortStream(activeId);
+              const msgs = useWorkspaceStore.getState().messagesByConvId[activeId] ?? [];
               const last = msgs[msgs.length - 1];
               if (last?.role === 'assistant' && last.streaming) {
-                useWorkspaceStore.setState({ messages: msgs.slice(0, -1) });
+                useWorkspaceStore.setState((s) => ({
+                  messagesByConvId: {
+                    ...s.messagesByConvId,
+                    [activeId]: msgs.slice(0, -1),
+                  },
+                }));
               }
             }
             setEditDraft(content);

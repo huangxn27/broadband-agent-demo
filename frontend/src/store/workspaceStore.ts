@@ -22,16 +22,18 @@ interface WorkspaceState {
   leftView: LeftView;
   activeConversationId: string | null;
 
-  // 消息流
-  messages: Message[];
-  messagesLoading: boolean;
-  isStreaming: boolean;
+  // 消息（per conversation）
+  messagesByConvId: Record<string, Message[]>;
+  messagesLoadingConvIds: Set<string>;
+
+  // 流式状态（per conversation）
+  streamingConvIds: Set<string>;
 
   // 右侧渲染
   currentRender: RenderBlock | null;
 
-  // 内部 abort controller
-  _abortCtrl: AbortController | null;
+  // 内部 abort controllers（per conversation）
+  _abortCtrls: Record<string, AbortController>;
 
   // actions
   setLeftView: (view: LeftView) => void;
@@ -40,7 +42,7 @@ interface WorkspaceState {
   backToList: () => void;
   loadMessages: (id: string) => Promise<void>;
   sendMessage: (content: string, deepThinking: boolean) => Promise<void>;
-  abortStream: () => void;
+  abortStream: (convId?: string) => void;
   setRender: (block: RenderBlock | null) => void;
 }
 
@@ -48,15 +50,13 @@ function newId(prefix: string) {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-/** 从历史 message 重建 blocks（历史无顺序信息，按 thinking→steps→text 重建） */
+/** 从历史 message 重建 blocks */
 function rebuildBlocks(m: Message): MessageBlock[] {
   const blocks: MessageBlock[] = [];
   if (m.thinkingContent?.trim()) {
-    // 历史消息无时间戳，startedAt/endedAt 用 0 占位，durationSec 显示为 thinkingDurationSec
     blocks.push({ type: 'thinking', content: m.thinkingContent, startedAt: 0, endedAt: 0 });
   }
   for (const step of m.steps ?? []) {
-    // 历史消息的 step：items 从 subSteps 重建，无 thinking 信息
     step.completed = true;
     step.items = step.subSteps.map((sub) => ({ type: 'sub_step' as const, data: sub }));
     blocks.push({ type: 'step', stepId: step.stepId });
@@ -70,39 +70,35 @@ function rebuildBlocks(m: Message): MessageBlock[] {
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   leftView: 'list',
   activeConversationId: null,
-  messages: [],
-  messagesLoading: false,
-  isStreaming: false,
+  messagesByConvId: {},
+  messagesLoadingConvIds: new Set(),
+  streamingConvIds: new Set(),
   currentRender: null,
-  _abortCtrl: null,
+  _abortCtrls: {},
 
   setLeftView: (view) => set({ leftView: view }),
   setActiveConversation: (id) => set({ activeConversationId: id }),
 
   openConversation: (id) => {
-    get().abortStream();
-    set({
-      leftView: 'chat',
-      activeConversationId: id,
-      messages: [],
-      currentRender: null,
-    });
+    // 切换会话时不中止其他会话的流，只切换视图
+    set({ leftView: 'chat', activeConversationId: id });
   },
 
   backToList: () => {
-    get().abortStream();
     set({ leftView: 'list' });
   },
 
   loadMessages: async (id) => {
-    set({ messagesLoading: true });
+    // 已有缓存则不重复请求
+    if (get().messagesByConvId[id]) return;
+
+    set((s) => ({ messagesLoadingConvIds: new Set([...s.messagesLoadingConvIds, id]) }));
     try {
       const resp = await getMessages(id);
       const list = (resp.list ?? []).map((m) => {
         if (m.role !== 'assistant') return m;
         return { ...m, blocks: rebuildBlocks(m) };
       });
-      // 恢复右侧最后一条 renderBlock
       let lastRender: RenderBlock | null = null;
       for (let i = list.length - 1; i >= 0; i--) {
         const m = list[i];
@@ -111,39 +107,52 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
           break;
         }
       }
-      set({ messages: list, currentRender: lastRender });
+      set((s) => ({
+        messagesByConvId: { ...s.messagesByConvId, [id]: list },
+        // 仅当切换到该会话时才更新右侧渲染
+        currentRender: s.activeConversationId === id ? lastRender : s.currentRender,
+      }));
     } catch (e) {
       console.error('loadMessages failed', e);
-      set({ messages: [] });
+      set((s) => ({ messagesByConvId: { ...s.messagesByConvId, [id]: [] } }));
     } finally {
-      set({ messagesLoading: false });
+      set((s) => {
+        const next = new Set(s.messagesLoadingConvIds);
+        next.delete(id);
+        return { messagesLoadingConvIds: next };
+      });
     }
   },
 
   sendMessage: async (content, deepThinking) => {
-    const { activeConversationId, isStreaming, messages } = get();
-    if (!activeConversationId || isStreaming) return;
+    const { activeConversationId, streamingConvIds } = get();
+    if (!activeConversationId) return;
+    const convId = activeConversationId;
 
-    // 首条消息时用 query 作为会话标题
-    const isFirstMessage = messages.filter((m) => m.role === 'user').length === 0;
+    // 当前会话正在流式中则不重复发送
+    if (streamingConvIds.has(convId)) return;
+
+    // 首条消息时更新会话标题
+    const existingMsgs = get().messagesByConvId[convId] ?? [];
+    const isFirstMessage = existingMsgs.filter((m) => m.role === 'user').length === 0;
     if (isFirstMessage) {
       const title = content.trim().slice(0, 30);
-      useConversationStore.getState().updateTitle(activeConversationId, title).catch(() => {});
+      useConversationStore.getState().updateTitle(convId, title).catch(() => {});
     }
 
-    // 1) 立即追加用户消息
+    // 追加用户消息
     const userMsg: Message = {
       id: newId('msg_user'),
-      conversationId: activeConversationId,
+      conversationId: convId,
       role: 'user',
       content,
       createdAt: new Date().toISOString(),
     };
-    // 2) 追加占位 assistant 消息（流式中）
+    // 追加占位 assistant 消息
     const assistantId = newId('msg_asst');
     const assistantMsg: Message = {
       id: assistantId,
-      conversationId: activeConversationId,
+      conversationId: convId,
       role: 'assistant',
       content: '',
       thinkingContent: '',
@@ -153,28 +162,36 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       streaming: true,
       createdAt: new Date().toISOString(),
     };
-    set({
-      messages: [...get().messages, userMsg, assistantMsg],
-      isStreaming: true,
-      currentRender: null,
-    });
+
+    const appendMsgs = (prev: Message[]) => [...prev, userMsg, assistantMsg];
+    set((s) => ({
+      messagesByConvId: {
+        ...s.messagesByConvId,
+        [convId]: appendMsgs(s.messagesByConvId[convId] ?? []),
+      },
+      streamingConvIds: new Set([...s.streamingConvIds, convId]),
+      // 切换到当前会话时清空右侧渲染
+      currentRender: s.activeConversationId === convId ? null : s.currentRender,
+    }));
 
     const ctrl = new AbortController();
-    set({ _abortCtrl: ctrl });
+    set((s) => ({ _abortCtrls: { ...s._abortCtrls, [convId]: ctrl } }));
 
-    // helper：immutable 更新最后一条 assistant
+    // helper：immutable 更新指定会话的 assistant 消息
     const updateAssistant = (updater: (m: Message) => Message) => {
-      set({
-        messages: get().messages.map((m) => (m.id === assistantId ? updater(m) : m)),
+      set((s) => {
+        const msgs = s.messagesByConvId[convId] ?? [];
+        return {
+          messagesByConvId: {
+            ...s.messagesByConvId,
+            [convId]: msgs.map((m) => (m.id === assistantId ? updater(m) : m)),
+          },
+        };
       });
     };
 
     try {
-      const resp = await sendMessageStream(
-        activeConversationId,
-        { content, deepThinking },
-        ctrl.signal,
-      );
+      const resp = await sendMessageStream(convId, { content, deepThinking }, ctrl.signal);
       const sseLog: { event: string; data: unknown }[] = [];
       await parseSseStream(
         resp,
@@ -184,7 +201,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
             case 'thinking': {
               const d = e.data as ThinkingEvent;
               if (d.stepId) {
-                // SubAgent 思考：追加到 step 的 items[]
                 updateAssistant((m) => ({
                   ...m,
                   steps: (m.steps ?? []).map((s) => {
@@ -192,7 +208,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
                     const items = s.items ?? [];
                     const last = items[items.length - 1];
                     if (last?.type === 'thinking' && !last.endedAt) {
-                      // 追加到当前 thinking block
                       return {
                         ...s,
                         items: [
@@ -201,7 +216,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
                         ],
                       };
                     }
-                    // 新建 thinking block，前端打开始时间戳
                     return {
                       ...s,
                       items: [
@@ -212,7 +226,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
                   }),
                 }));
               } else {
-                // Orchestrator 思考：追加到 blocks[] 的 thinking block
                 updateAssistant((m) => {
                   const blocks = m.blocks ?? [];
                   const last = blocks[blocks.length - 1];
@@ -230,7 +243,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
               updateAssistant((m) => {
                 const blocks = m.blocks ?? [];
                 const last = blocks[blocks.length - 1];
-                // 关闭前一个 thinking block（如果有）
                 const closedBlocks = last?.type === 'thinking' && !last.endedAt
                   ? [...blocks.slice(0, -1), { ...last, endedAt: Date.now() }]
                   : blocks;
@@ -249,7 +261,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
               updateAssistant((m) => {
                 const blocks = m.blocks ?? [];
                 const last = blocks[blocks.length - 1];
-                // 关闭前一个 thinking block（如果有）
                 const closedBlocks = last?.type === 'thinking' && !last.endedAt
                   ? [...blocks.slice(0, -1), { ...last, endedAt: Date.now() }]
                   : blocks;
@@ -277,7 +288,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
                 ...m,
                 steps: (m.steps ?? []).map((s) => {
                   if (s.stepId !== d.stepId) return s;
-                  // 关闭当前正在流式的 thinking block（打 endedAt 时间戳）
                   const closedItems = (s.items ?? []).map((item, idx) =>
                     idx === s.items.length - 1 && item.type === 'thinking' && !item.endedAt
                       ? { ...item, endedAt: Date.now() }
@@ -298,7 +308,6 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
                 ...m,
                 steps: (m.steps ?? []).map((s) => {
                   if (s.stepId !== d.stepId) return s;
-                  // 关闭最后一个 thinking block（如果有）
                   const closedItems = (s.items ?? []).map((item, idx) =>
                     idx === s.items.length - 1 && item.type === 'thinking' && !item.endedAt
                       ? { ...item, endedAt: Date.now() }
@@ -315,7 +324,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
                 ...m,
                 renderBlocks: [...(m.renderBlocks ?? []), block],
               }));
-              set({ currentRender: block });
+              // 仅当前活跃会话才更新右侧渲染
+              if (get().activeConversationId === convId) {
+                set({ currentRender: block });
+              }
               break;
             }
             case 'done': {
@@ -337,11 +349,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
             }
             case 'error': {
               const d = e.data as SseErrorEvent;
-              updateAssistant((m) => ({
-                ...m,
-                streaming: false,
-                error: d.message,
-              }));
+              updateAssistant((m) => ({ ...m, streaming: false, error: d.message }));
               break;
             }
             default:
@@ -350,6 +358,15 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         },
         ctrl.signal,
       );
+
+      // 开发模式写 SSE 日志
+      if (import.meta.env.DEV && sseLog.length > 0) {
+        fetch('/dev/sse-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ convId, events: sseLog }),
+        }).catch(() => {});
+      }
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') {
         // 主动中止，不视为错误
@@ -358,23 +375,29 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         updateAssistant((m) => ({ ...m, streaming: false, error: msg }));
       }
     } finally {
-      set({ isStreaming: false, _abortCtrl: null });
-      // 开发模式下将 SSE 日志写入本地文件
-      if (import.meta.env.DEV && sseLog.length > 0) {
-        fetch('/dev/sse-log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ convId: activeConversationId, events: sseLog }),
-        }).catch(() => {});
-      }
+      set((s) => {
+        const nextStreaming = new Set(s.streamingConvIds);
+        nextStreaming.delete(convId);
+        const nextCtrls = { ...s._abortCtrls };
+        delete nextCtrls[convId];
+        return { streamingConvIds: nextStreaming, _abortCtrls: nextCtrls };
+      });
     }
   },
 
-  abortStream: () => {
-    const ctrl = get()._abortCtrl;
+  abortStream: (convId?: string) => {
+    const id = convId ?? get().activeConversationId;
+    if (!id) return;
+    const ctrl = get()._abortCtrls[id];
     if (ctrl) {
       ctrl.abort();
-      set({ _abortCtrl: null, isStreaming: false });
+      set((s) => {
+        const nextStreaming = new Set(s.streamingConvIds);
+        nextStreaming.delete(id);
+        const nextCtrls = { ...s._abortCtrls };
+        delete nextCtrls[id];
+        return { streamingConvIds: nextStreaming, _abortCtrls: nextCtrls };
+      });
     }
   },
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Empty, Modal, Skeleton, Tooltip } from 'antd';
-import { PlusOutlined, DeleteOutlined, MessageOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, MessageOutlined, LoadingOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useConversationStore } from '@/store/conversationStore';
 import { useWorkspaceStore } from '@/store/workspaceStore';
@@ -17,6 +17,7 @@ function formatTime(iso: string) {
 function ConversationList() {
   const { list, loading, fetch, create, remove } = useConversationStore();
   const openConversation = useWorkspaceStore((s) => s.openConversation);
+  const streamingConvIds = useWorkspaceStore((s) => s.streamingConvIds);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -87,7 +88,10 @@ function ConversationList() {
             <div key={conv.id} className={styles.item} onClick={() => handleClick(conv)}>
               <div className={styles.itemHeader}>
                 <div className={styles.itemTitle}>
-                  <MessageOutlined className={styles.itemIcon} />
+                  {streamingConvIds.has(conv.id)
+                    ? <LoadingOutlined className={styles.itemIcon} spin />
+                    : <MessageOutlined className={styles.itemIcon} />
+                  }
                   <span>{conv.title}</span>
                 </div>
                 <span className={styles.itemTime}>{formatTime(conv.updatedAt)}</span>
