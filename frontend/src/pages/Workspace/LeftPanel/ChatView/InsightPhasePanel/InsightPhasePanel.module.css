@@ -55,6 +55,26 @@
   cursor: default;
 }
 
+.phaseHeaderClickable {
+  cursor: pointer;
+}
+
+.phaseHeaderClickable:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+}
+
+.phaseArrow {
+  font-size: 10px;
+  color: #4b5563;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.phaseArrowOpen {
+  transform: rotate(90deg);
+}
+
 .phaseName {
   font-size: 13px;
   color: #9ca3af;

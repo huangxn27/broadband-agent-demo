@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Tooltip } from 'antd';
-import { CheckCircleFilled, SyncOutlined } from '@ant-design/icons';
+import { CheckCircleFilled, SyncOutlined, RightOutlined } from '@ant-design/icons';
 
 import type { InsightState, InsightPhase, InsightStep, PhaseStatus } from '@/types/insight';
 import styles from './InsightPhasePanel.module.css';
@@ -40,9 +41,19 @@ function StepRow({ step }: { step: InsightStep }) {
 
 function PhaseRow({ phase }: { phase: InsightPhase }) {
   const isDiscarded = phase.reflection?.choice === 'D';
+  const isDone = phase.status === 'done' || phase.status === 'reflected';
+  const hasSteps = phase.steps.length > 0;
+  // 完成后默认折叠，执行中默认展开
+  const [expanded, setExpanded] = useState(!isDone);
+
+  const toggleable = hasSteps && isDone;
+
   return (
     <div className={`${styles.phaseBlock} ${isDiscarded ? styles.phaseDiscarded : ''}`}>
-      <div className={styles.phaseHeader}>
+      <div
+        className={`${styles.phaseHeader} ${toggleable ? styles.phaseHeaderClickable : ''}`}
+        onClick={toggleable ? () => setExpanded((v) => !v) : undefined}
+      >
         <PhaseIcon status={phase.status} />
         <span className={`
           ${styles.phaseName}
@@ -58,8 +69,11 @@ function PhaseRow({ phase }: { phase: InsightPhase }) {
             </span>
           </Tooltip>
         )}
+        {toggleable && (
+          <RightOutlined className={`${styles.phaseArrow} ${expanded ? styles.phaseArrowOpen : ''}`} />
+        )}
       </div>
-      {phase.steps.length > 0 && (
+      {hasSteps && expanded && (
         <div className={styles.stepList}>
           {phase.steps.map((s) => (
             <StepRow key={s.stepId} step={s} />
