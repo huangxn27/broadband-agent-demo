@@ -28,28 +28,187 @@
 
 .reportInner {
   width: 70%;
-  background: #161b22;
-  border: 1px solid #1f2937;
-  border-radius: 12px;
-  padding: 24px 32px;
+  background: linear-gradient(160deg, #161b22 0%, #0f1318 100%);
+  border: 1px solid #2d3748;
+  border-radius: 16px;
+  padding: 32px 40px;
   font-size: 14px;
-  color: #e5e7eb;
-  line-height: 1.7;
+  color: #cbd5e0;
+  line-height: 1.8;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
-.reportInner h1, .reportInner h2, .reportInner h3, .reportInner h4 {
-  color: #fff;
-  margin: 18px 0 10px;
+/* 标题 */
+.reportInner h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0f6fc;
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #3b82f6;
+  letter-spacing: 0.3px;
 }
-.reportInner h1 { font-size: 22px; }
-.reportInner h2 { font-size: 18px; }
-.reportInner h3 { font-size: 16px; }
-.reportInner h1:first-child, .reportInner h2:first-child { margin-top: 0; }
-.reportInner p { margin: 8px 0; }
-.reportInner ul, .reportInner ol { padding-left: 24px; margin: 8px 0; }
-.reportInner strong { color: #fff; }
-.reportInner table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
-.reportInner th, .reportInner td { border: 1px solid #1f2937; padding: 8px 12px; text-align: left; }
-.reportInner th { background: #0d1117; color: #fff; font-weight: 600; }
-.reportInner code { background: #0d1117; padding: 2px 6px; border-radius: 4px; color: #f0883e; font-size: 13px; }
-.reportInner pre { background: #0d1117; padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
+
+.reportInner h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 28px 0 12px;
+  padding-left: 10px;
+  border-left: 3px solid #6366f1;
+}
+
+.reportInner h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #a5b4fc;
+  margin: 20px 0 8px;
+}
+
+.reportInner h1:first-child,
+.reportInner h2:first-child,
+.reportInner h3:first-child {
+  margin-top: 0;
+}
+
+/* 正文 */
+.reportInner p {
+  margin: 10px 0;
+  color: #cbd5e0;
+}
+
+.reportInner strong {
+  color: #f0f6fc;
+  font-weight: 600;
+}
+
+.reportInner em {
+  color: #93c5fd;
+  font-style: italic;
+}
+
+/* 列表 */
+.reportInner ul {
+  padding-left: 0;
+  margin: 10px 0;
+  list-style: none;
+}
+
+.reportInner ul li {
+  position: relative;
+  padding-left: 18px;
+  margin: 6px 0;
+  color: #cbd5e0;
+}
+
+.reportInner ul li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6366f1;
+}
+
+.reportInner ol {
+  padding-left: 20px;
+  margin: 10px 0;
+}
+
+.reportInner ol li {
+  margin: 6px 0;
+  color: #cbd5e0;
+  padding-left: 4px;
+}
+
+/* 分割线 */
+.reportInner hr {
+  border: none;
+  border-top: 1px solid #2d3748;
+  margin: 20px 0;
+}
+
+/* 引用块 */
+.reportInner blockquote {
+  margin: 14px 0;
+  padding: 12px 16px;
+  border-left: 3px solid #3b82f6;
+  background: rgba(59, 130, 246, 0.06);
+  border-radius: 0 8px 8px 0;
+  color: #93c5fd;
+  font-style: italic;
+}
+
+/* 行内代码 */
+.reportInner code {
+  background: rgba(240, 136, 62, 0.12);
+  padding: 2px 7px;
+  border-radius: 5px;
+  color: #f0883e;
+  font-size: 13px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  border: 1px solid rgba(240, 136, 62, 0.2);
+}
+
+/* 代码块 */
+.reportInner pre {
+  background: #0d1117;
+  border: 1px solid #2d3748;
+  padding: 16px 20px;
+  border-radius: 10px;
+  overflow-x: auto;
+  margin: 14px 0;
+}
+
+.reportInner pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #e2e8f0;
+  font-size: 13px;
+}
+
+/* 表格 */
+.reportInner table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 16px 0;
+  font-size: 13px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.reportInner thead tr {
+  background: linear-gradient(90deg, #1e3a5f 0%, #1a2d4a 100%);
+}
+
+.reportInner th {
+  padding: 10px 14px;
+  text-align: left;
+  color: #93c5fd;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #2d3748;
+}
+
+.reportInner td {
+  padding: 9px 14px;
+  border-bottom: 1px solid #1f2937;
+  color: #cbd5e0;
+}
+
+.reportInner tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.reportInner tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.reportInner tbody tr:hover {
+  background: rgba(99, 102, 241, 0.06);
+}
