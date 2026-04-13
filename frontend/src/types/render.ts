@@ -13,6 +13,8 @@ export interface ChartItem {
   conclusion: string;
   // ECharts option，结构由后端决定，前端直接透传
   echartsOption: Record<string, unknown>;
+  phaseId?: number;
+  stepId?: number;
 }
 
 export interface InsightRenderData {
