@@ -55,13 +55,13 @@
   color: #e2e8f0;
   margin: 28px 0 12px;
   padding-left: 10px;
-  border-left: 3px solid #6366f1;
+  border-left: 3px solid #3b82f6;
 }
 
 .reportInner h3 {
   font-size: 14px;
   font-weight: 600;
-  color: #a5b4fc;
+  color: #93c5fd;
   margin: 20px 0 8px;
 }
 
@@ -109,7 +109,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #6366f1;
+  background: #3b82f6;
 }
 
 .reportInner ol {
@@ -210,5 +210,5 @@
 }
 
 .reportInner tbody tr:hover {
-  background: rgba(99, 102, 241, 0.06);
+  background: rgba(59, 130, 246, 0.06);
 }
