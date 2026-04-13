@@ -31,13 +31,6 @@ function InsightDisplay({ data }: Props) {
         </div>
       ))}
 
-      {data.markdownReport?.trim() && (
-        <div className={styles.reportWrap}>
-          <div className={styles.report}>
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.markdownReport}</ReactMarkdown>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

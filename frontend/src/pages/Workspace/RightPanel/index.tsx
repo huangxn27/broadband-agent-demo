@@ -1,3 +1,5 @@
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import EmptyState from './EmptyState';
 import ImageDisplay from './ImageDisplay';
@@ -39,15 +41,26 @@ function RightPanel() {
               </div>
             );
           }
+
+          const { charts, markdownReport } = block.renderData;
           const span = getInsightSpan(block.renderData);
           return (
-            <div
-              key={i}
-              className={styles.gridCell}
-              style={span === 2 ? { gridColumn: '1 / -1' } : undefined}
-            >
-              <InsightDisplay data={block.renderData} />
-            </div>
+            <>
+              <div
+                key={`chart-${i}`}
+                className={styles.gridCell}
+                style={span === 2 ? { gridColumn: '1 / -1' } : undefined}
+              >
+                <InsightDisplay data={block.renderData} />
+              </div>
+              {markdownReport?.trim() && (
+                <div key={`report-${i}`} className={styles.reportRow}>
+                  <div className={styles.reportInner}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{markdownReport}</ReactMarkdown>
+                  </div>
+                </div>
+              )}
+            </>
           );
         })}
       </div>

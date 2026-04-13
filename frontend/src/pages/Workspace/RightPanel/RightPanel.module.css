@@ -18,3 +18,38 @@
 .gridCell {
   min-width: 0;
 }
+
+/* markdown 报告独占整行，内容居中取双列宽度的 70% */
+.reportRow {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+}
+
+.reportInner {
+  width: 70%;
+  background: #161b22;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 24px 32px;
+  font-size: 14px;
+  color: #e5e7eb;
+  line-height: 1.7;
+}
+
+.reportInner h1, .reportInner h2, .reportInner h3, .reportInner h4 {
+  color: #fff;
+  margin: 18px 0 10px;
+}
+.reportInner h1 { font-size: 22px; }
+.reportInner h2 { font-size: 18px; }
+.reportInner h3 { font-size: 16px; }
+.reportInner h1:first-child, .reportInner h2:first-child { margin-top: 0; }
+.reportInner p { margin: 8px 0; }
+.reportInner ul, .reportInner ol { padding-left: 24px; margin: 8px 0; }
+.reportInner strong { color: #fff; }
+.reportInner table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 13px; }
+.reportInner th, .reportInner td { border: 1px solid #1f2937; padding: 8px 12px; text-align: left; }
+.reportInner th { background: #0d1117; color: #fff; font-weight: 600; }
+.reportInner code { background: #0d1117; padding: 2px 6px; border-radius: 4px; color: #f0883e; font-size: 13px; }
+.reportInner pre { background: #0d1117; padding: 14px 16px; border-radius: 6px; overflow-x: auto; }
