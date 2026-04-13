@@ -14,7 +14,7 @@ function ImageDisplay({ data }: Props) {
       <h1 className={styles.title}>{data.title}</h1>
       <div className={styles.imageBox}>
         <Image
-          src={data.imageUrl}
+          src={`${import.meta.env.VITE_API_HOST || ''}${data.imageUrl}`}
           alt={data.title}
           className={styles.image}
           loading="lazy"
