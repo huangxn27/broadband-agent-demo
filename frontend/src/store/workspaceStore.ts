@@ -29,8 +29,8 @@ interface WorkspaceState {
   // 流式状态（per conversation）
   streamingConvIds: Set<string>;
 
-  // 右侧渲染
-  currentRender: RenderBlock | null;
+  // 右侧渲染（per conversation 所有 render blocks）
+  currentRenders: RenderBlock[];
 
   // 内部 abort controllers（per conversation）
   _abortCtrls: Record<string, AbortController>;
@@ -43,7 +43,7 @@ interface WorkspaceState {
   loadMessages: (id: string) => Promise<void>;
   sendMessage: (content: string, deepThinking: boolean) => Promise<void>;
   abortStream: (convId?: string) => void;
-  setRender: (block: RenderBlock | null) => void;
+  setRenders: (blocks: RenderBlock[]) => void;
 }
 
 function newId(prefix: string) {
@@ -73,7 +73,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   messagesByConvId: {},
   messagesLoadingConvIds: new Set(),
   streamingConvIds: new Set(),
-  currentRender: null,
+  currentRenders: [],
   _abortCtrls: {},
 
   setLeftView: (view) => set({ leftView: view }),
@@ -99,18 +99,18 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
         if (m.role !== 'assistant') return m;
         return { ...m, blocks: rebuildBlocks(m) };
       });
-      let lastRender: RenderBlock | null = null;
+      let lastRenders: RenderBlock[] = [];
       for (let i = list.length - 1; i >= 0; i--) {
         const m = list[i];
         if (m.role === 'assistant' && m.renderBlocks && m.renderBlocks.length > 0) {
-          lastRender = m.renderBlocks[m.renderBlocks.length - 1];
+          lastRenders = m.renderBlocks;
           break;
         }
       }
       set((s) => ({
         messagesByConvId: { ...s.messagesByConvId, [id]: list },
         // 仅当切换到该会话时才更新右侧渲染
-        currentRender: s.activeConversationId === id ? lastRender : s.currentRender,
+        currentRenders: s.activeConversationId === id ? lastRenders : s.currentRenders,
       }));
     } catch (e) {
       console.error('loadMessages failed', e);
@@ -171,7 +171,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
       },
       streamingConvIds: new Set([...s.streamingConvIds, convId]),
       // 切换到当前会话时清空右侧渲染
-      currentRender: s.activeConversationId === convId ? null : s.currentRender,
+      currentRenders: s.activeConversationId === convId ? [] : s.currentRenders,
     }));
 
     const ctrl = new AbortController();
@@ -326,7 +326,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
               }));
               // 仅当前活跃会话才更新右侧渲染
               if (get().activeConversationId === convId) {
-                set({ currentRender: block });
+                set((s) => ({ currentRenders: [...s.currentRenders, block] }));
               }
               break;
             }
@@ -401,5 +401,5 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     }
   },
 
-  setRender: (block) => set({ currentRender: block }),
+  setRenders: (blocks) => set({ currentRenders: blocks }),
 }));

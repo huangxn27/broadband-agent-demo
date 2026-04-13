@@ -5,16 +5,24 @@ import InsightDisplay from './InsightDisplay';
 import styles from './RightPanel.module.css';
 
 function RightPanel() {
-  const currentRender = useWorkspaceStore((s) => s.currentRender);
+  const currentRenders = useWorkspaceStore((s) => s.currentRenders);
+
+  if (currentRenders.length === 0) {
+    return (
+      <main className={styles.rightPanel}>
+        <EmptyState />
+      </main>
+    );
+  }
 
   return (
     <main className={styles.rightPanel}>
-      {!currentRender ? (
-        <EmptyState />
-      ) : currentRender.renderType === 'image' ? (
-        <ImageDisplay data={currentRender.renderData} />
-      ) : (
-        <InsightDisplay data={currentRender.renderData} />
+      {currentRenders.map((block, i) =>
+        block.renderType === 'image' ? (
+          <ImageDisplay key={i} data={block.renderData} />
+        ) : (
+          <InsightDisplay key={i} data={block.renderData} />
+        )
       )}
     </main>
   );
