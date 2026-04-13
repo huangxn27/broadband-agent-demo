@@ -5,3 +5,25 @@
   overflow: hidden;
   background: #0d1117;
 }
+
+.leftWrap {
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.divider {
+  width: 4px;
+  flex-shrink: 0;
+  height: 100%;
+  background: #1f2937;
+  cursor: col-resize;
+  transition: background 0.15s;
+  position: relative;
+  z-index: 10;
+}
+
+.divider:hover,
+.divider:active {
+  background: #3b82f6;
+}
