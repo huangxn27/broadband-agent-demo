@@ -39,7 +39,7 @@ function getReport(block: RenderBlock): string | undefined {
 }
 
 type Row =
-  | { kind: 'single'; block: RenderBlock; report?: string }
+  | { kind: 'single'; block: RenderBlock; solo: boolean; report?: string }
   | { kind: 'pair'; left: RenderBlock; right: RenderBlock; leftPct: number; report?: string };
 
 /** 贪心行分配：配对时按双方自然宽度归一化，动态决定各自占比 */
@@ -73,7 +73,7 @@ function computeRows(renders: RenderBlock[]): Row[] {
         report,
       };
     } else {
-      rows.push({ kind: 'single', block, report });
+      rows.push({ kind: 'single', block, solo: isSolo, report });
     }
   }
 
@@ -104,7 +104,7 @@ function RightPanel() {
         <div key={i} className={styles.rowWrap}>
           <div className={styles.rowItems}>
             {row.kind === 'single' ? (
-              <div style={{ width: '100%' }}>
+              <div style={{ width: row.solo ? '100%' : '50%' }}>
                 {row.block.renderType === 'image'
                   ? <ImageDisplay data={row.block.renderData} />
                   : <InsightDisplay data={row.block.renderData} />}
