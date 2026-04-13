@@ -21,7 +21,7 @@ function InsightDisplay({ data }: Props) {
               textStyle: { color: '#9ca3af' },
               grid: { left: 50, right: 20, top: 30, bottom: 40 },
             }}
-            style={{ height: 220, width: '100%' }}
+            style={{ height: 320, width: '100%' }}
             opts={{ renderer: 'svg' }}
             theme="dark"
           />
