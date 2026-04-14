@@ -1,4 +1,4 @@
-import type { RenderBlock } from './render';
+import type { RenderBlock, ChartItem } from './render';
 import type { InsightState } from './insight';
 
 export interface SubStep {
@@ -44,7 +44,7 @@ export type MessageBlock =
   | { type: 'thinking'; content: string; startedAt: number; endedAt?: number }
   | { type: 'step'; stepId: string }
   | { type: 'text'; content: string }
-  | { type: 'report_ready'; content: string };
+  | { type: 'report_ready'; content: string; charts: ChartItem[] };
 
 export interface Message {
   id: string;

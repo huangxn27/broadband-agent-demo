@@ -35,7 +35,11 @@ export interface ErrorEvent {
   message: string;
 }
 export interface ReportEvent {
-  content: string;
+  renderType: 'insight';
+  renderData: {
+    charts: import('./render').ChartItem[];
+    markdownReport: string;
+  };
 }
 
 export type SseEventName =
