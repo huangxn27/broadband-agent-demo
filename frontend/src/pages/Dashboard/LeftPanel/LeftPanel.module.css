@@ -30,21 +30,21 @@
 /* 底部输入框区：不参与 Sheet 定位，始终可见 */
 .inputArea {
   flex-shrink: 0;
-  padding: 0 16px 16px;
+  padding: 0 20px 20px;
 }
 
 /* 贴图区 */
 .bannerArea {
-  padding: 18px 16px;
+  padding: 16px 20px 14px;
   flex-shrink: 0;
   border-bottom: 1px solid #1f2937;
 }
 
 .bannerImg {
   width: 100%;
-  height: 200px;
+  height: 176px;
   object-fit: scale-down;
-  border-radius: 8px;
+  border-radius: 10px;
   display: block;
 }
 
@@ -58,7 +58,7 @@
   background: #111827;
   border: 1px solid #2d3748;
   border-bottom: none;
-  border-radius: 14px 14px 0 0;
+  border-radius: 16px 16px 0 0;
   display: flex;
   flex-direction: column;
   transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
@@ -74,8 +74,8 @@
 /* 顶部拖拽手柄 */
 .dragHandle {
   flex-shrink: 0;
-  height: 6px;
-  border-radius: 14px 14px 0 0;
+  height: 8px;
+  border-radius: 16px 16px 0 0;
   cursor: ns-resize;
   display: flex;
   align-items: center;
@@ -84,8 +84,8 @@
 
 .dragHandle::after {
   content: '';
-  width: 32px;
-  height: 3px;
+  width: 40px;
+  height: 4px;
   border-radius: 2px;
   background: #374151;
   transition: background 0.15s;
@@ -97,7 +97,7 @@
 
 /* ── 标题栏：固定 50px，标题居中，chevron 绝对定位在右侧 ── */
 .sheetHeader {
-  height: 36px;
+  height: 42px;
   flex-shrink: 0;
   position: relative;
   display: flex;
@@ -107,7 +107,7 @@
   cursor: pointer;
   user-select: none;
   transition: background 0.15s;
-  border-radius: 14px 14px 0 0;
+  border-radius: 16px 16px 0 0;
 }
 
 .sheetHeader:hover {
@@ -118,11 +118,11 @@
 .sheetTitleRow {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .sheetTitle {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: #d1d5db;
   letter-spacing: 0.05em;
@@ -137,8 +137,8 @@
 
 .loadingDots span {
   display: inline-block;
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
   background: #9ca3af;
   border-radius: 50%;
   animation: dotBlink 1.2s infinite ease-in-out;
@@ -155,9 +155,9 @@
 /* CSS chevron：绝对定位在标题栏右侧 */
 .chevron {
   position: absolute;
-  right: 18px;
-  width: 9px;
-  height: 9px;
+  right: 20px;
+  width: 10px;
+  height: 10px;
   border-right: 2px solid #6b7280;
   border-bottom: 2px solid #6b7280;
   border-radius: 1px;
