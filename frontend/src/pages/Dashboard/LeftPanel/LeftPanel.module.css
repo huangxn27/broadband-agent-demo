@@ -74,9 +74,9 @@
   box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.7), inset 0 1px 0 #374151;
 }
 
-/* 收起态：仅露出 50px 标题栏 */
+/* 收起态：仅露出 36px 标题栏 */
 .sheetCollapsed {
-  transform: translateY(370px);
+  transform: translateY(384px);
 }
 
 /* 展开态 */
@@ -86,7 +86,7 @@
 
 /* ── 标题栏：固定 50px，标题居中，chevron 绝对定位在右侧 ── */
 .sheetHeader {
-  height: 50px;
+  height: 36px;
   flex-shrink: 0;
   position: relative;
   display: flex;
