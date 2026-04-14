@@ -28,6 +28,7 @@ function DashboardLeftPanel({ onViewReport }: Props) {
   const sendMessage = useWorkspaceStore((s) => s.sendMessage);
   const setActiveConversation = useWorkspaceStore((s) => s.setActiveConversation);
   const createConversation = useConversationStore((s) => s.create);
+  const updateTitle = useConversationStore((s) => s.updateTitle);
 
   const initiated = useRef(false);
 
@@ -36,7 +37,7 @@ function DashboardLeftPanel({ onViewReport }: Props) {
     initiated.current = true;
     (async () => {
       try {
-        const conv = await createConversation('网络级-Dashboard 对话');
+        const conv = await createConversation('网络级入口');
         setConvId(conv.id);
         setActiveConversation(conv.id);
       } catch {
@@ -54,6 +55,9 @@ function DashboardLeftPanel({ onViewReport }: Props) {
     if (!convId || isStreaming) return;
     setActiveConversation(convId);
     setSheetOpen(true);
+    if (messages.length === 0) {
+      updateTitle(convId, `网络级入口-${content.slice(0, 20)}`);
+    }
     sendMessage(content, deepThinking);
   };
 

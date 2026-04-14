@@ -20,7 +20,7 @@ function LeftPanel({ prefillMessage }: Props) {
     if (!prefillMessage) return;
     setLeftView('chat'); // 同步切视图，消除闪烁
     (async () => {
-      const conv = await createConversation('用户级-新对话');
+      const conv = await createConversation('新对话');
       setActiveConversation(conv.id);
     })();
   // eslint-disable-next-line react-hooks/exhaustive-deps

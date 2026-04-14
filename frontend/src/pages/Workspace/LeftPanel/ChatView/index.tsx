@@ -21,6 +21,7 @@ function ChatView({ prefillMessage }: Props) {
   const abortStream = useWorkspaceStore((s) => s.abortStream);
 
   const conversations = useConversationStore((s) => s.list);
+  const updateTitle = useConversationStore((s) => s.updateTitle);
   const [editDraft, setEditDraft] = useState(prefillMessage ?? '');
 
   const messages = activeId ? (messagesByConvId[activeId] ?? []) : [];
@@ -84,6 +85,9 @@ function ChatView({ prefillMessage }: Props) {
         onSend={(content, deepThinking) => {
           if (isStreaming) return;
           setEditDraft('');
+          if (messages.length === 0 && activeId) {
+            updateTitle(activeId, `用户级入口-${content.slice(0, 20)}`);
+          }
           sendMessage(content, deepThinking);
         }}
         fillValue={editDraft}
