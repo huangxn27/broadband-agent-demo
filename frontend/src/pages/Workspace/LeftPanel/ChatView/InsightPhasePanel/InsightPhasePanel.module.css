@@ -1,3 +1,4 @@
+/* ── 内联模式（Workspace MessageList 中） ── */
 .panel {
   width: 100%;
   background: #0d1117;
@@ -7,19 +8,62 @@
   margin-top: 8px;
 }
 
+/* ── 面板模式（Dashboard Sheet 中，固定高度可折叠） ── */
+.panelFixed {
+  width: 100%;
+  height: 500px;
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid #1f2937;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: height 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #0d1117;
+}
+
+.panelCollapsed {
+  height: 42px;
+}
+
+/* ── 头部 ── */
 .panelHeader {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   padding: 10px 14px 8px;
   border-bottom: 1px solid #1f2937;
   background: #161b22;
+}
+
+.panelHeaderClickable {
+  height: 42px;
+  padding: 0 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.panelHeaderClickable:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .panelTitle {
   font-size: 13px;
   font-weight: 600;
   color: #e2e8f0;
+  flex: 1;
+}
+
+.goalInline {
+  font-size: 11px;
+  color: #4b5563;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .panelProgress {
@@ -28,9 +72,38 @@
   background: #1f2937;
   padding: 1px 8px;
   border-radius: 10px;
+  flex-shrink: 0;
 }
 
+/* 折叠 chevron */
+.collapseChevron {
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid #6b7280;
+  border-bottom: 2px solid #6b7280;
+  border-radius: 1px;
+  flex-shrink: 0;
+  transition: transform 0.25s ease, border-color 0.15s;
+}
+
+.panelHeaderClickable:hover .collapseChevron {
+  border-color: #9ca3af;
+}
+
+/* 展开时朝下 ∨ */
+.chevronExpanded {
+  transform: rotate(45deg) translateY(-2px);
+}
+
+/* 收起时朝上 ∧ */
+.chevronCollapsed {
+  transform: rotate(-135deg) translateY(-2px);
+  border-color: #4b5563;
+}
+
+/* goal 行（面板模式下单独一行） */
 .goal {
+  flex-shrink: 0;
   padding: 8px 14px;
   font-size: 12px;
   color: #6b7280;
@@ -38,11 +111,70 @@
   line-height: 1.5;
 }
 
+/* phases 列表 */
 .phaseList {
+  flex: 1;
+  overflow-y: auto;
   padding: 6px 0;
 }
 
-/* Phase */
+/* 内联模式下 phaseList 无 flex */
+.panel:not(.panelFixed) .phaseList {
+  overflow-y: visible;
+}
+
+/* ── 报告按钮 footer ── */
+.reportFooter {
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border-top: 1px solid #1f2937;
+  display: flex;
+  align-items: center;
+}
+
+.reportBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.1);
+}
+
+.reportBtn:hover {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.25) 0%, rgba(59, 130, 246, 0.15) 100%);
+  border-color: rgba(96, 165, 250, 0.55);
+  box-shadow: 0 0 16px rgba(59, 130, 246, 0.2);
+}
+
+.reportIcon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.reportText {
+  font-size: 12px;
+  font-weight: 600;
+  color: #93c5fd;
+  letter-spacing: 0.02em;
+}
+
+.reportArrow {
+  font-size: 13px;
+  color: #60a5fa;
+  flex-shrink: 0;
+  transition: transform 0.18s;
+}
+
+.reportBtn:hover .reportArrow {
+  transform: translateX(3px);
+}
+
+/* ── Phase ── */
 .phaseBlock {
   padding: 4px 0;
 }
@@ -86,7 +218,6 @@
   font-weight: 500;
 }
 
-/* D 选项：phase 整体灰掉 */
 .phaseDiscarded {
   opacity: 0.45;
 }
@@ -136,7 +267,6 @@
   display: inline-block;
 }
 
-/* 旋转圆环 — phase 级别 */
 .spinRing {
   width: 14px;
   height: 14px;
@@ -147,7 +277,6 @@
   animation: spin 0.8s linear infinite;
 }
 
-/* 旋转圆环 — step 级别（小一号）*/
 .spinRingSmall {
   width: 10px;
   height: 10px;

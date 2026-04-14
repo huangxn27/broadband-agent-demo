@@ -3,10 +3,18 @@ import { Tooltip } from 'antd';
 import { CheckCircleFilled, SyncOutlined, RightOutlined } from '@ant-design/icons';
 
 import type { InsightState, InsightPhase, InsightStep, PhaseStatus } from '@/types/insight';
+import type { ChartItem } from '@/types/render';
 import styles from './InsightPhasePanel.module.css';
 
 interface Props {
   state: InsightState;
+  /** 面板模式：传入时渲染为可折叠的固定高度面板 */
+  collapsed?: boolean;
+  onToggle?: () => void;
+  /** 报告就绪时在底部左侧渲染查看按钮 */
+  reportContent?: string;
+  reportCharts?: ChartItem[];
+  onViewReport?: (content: string, charts: ChartItem[]) => void;
 }
 
 function PhaseIcon({ status }: { status: PhaseStatus }) {
@@ -45,7 +53,6 @@ function PhaseRow({ phase }: { phase: InsightPhase }) {
   const hasSteps = phase.steps.length > 0;
   const [expanded, setExpanded] = useState(!isDone);
 
-  // status 变为完成时自动收起
   useEffect(() => {
     if (isDone) setExpanded(false);
   }, [isDone]);
@@ -88,22 +95,58 @@ function PhaseRow({ phase }: { phase: InsightPhase }) {
   );
 }
 
-function InsightPhasePanel({ state }: Props) {
+function InsightPhasePanel({ state, collapsed, onToggle, reportContent, reportCharts, onViewReport }: Props) {
   const done = state.phases.filter((p) => p.status === 'done' || p.status === 'reflected').length;
   const total = state.totalPhases || state.phases.length;
+  const isPanelMode = onToggle !== undefined;
+
+  const panelClass = [
+    styles.panel,
+    isPanelMode ? styles.panelFixed : '',
+    isPanelMode && collapsed ? styles.panelCollapsed : '',
+  ].filter(Boolean).join(' ');
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.panelHeader}>
-        <span className={styles.panelTitle}>📊 洞察分析进度</span>
+    <div className={panelClass}>
+      <div
+        className={`${styles.panelHeader} ${isPanelMode ? styles.panelHeaderClickable : ''}`}
+        onClick={isPanelMode ? onToggle : undefined}
+      >
+        <span className={styles.panelTitle}>进度跟踪</span>
+        {state.goal && !isPanelMode && (
+          <span className={styles.goalInline}>{state.goal}</span>
+        )}
         <span className={styles.panelProgress}>{done} / {total}</span>
+        {isPanelMode && (
+          <span className={`${styles.collapseChevron} ${collapsed ? styles.chevronCollapsed : styles.chevronExpanded}`} />
+        )}
       </div>
-      {state.goal && <div className={styles.goal}>{state.goal}</div>}
-      <div className={styles.phaseList}>
-        {state.phases.map((p) => (
-          <PhaseRow key={p.phaseId} phase={p} />
-        ))}
-      </div>
+
+      {(!isPanelMode || !collapsed) && (
+        <>
+          {state.goal && isPanelMode && (
+            <div className={styles.goal}>{state.goal}</div>
+          )}
+          <div className={styles.phaseList}>
+            {state.phases.map((p) => (
+              <PhaseRow key={p.phaseId} phase={p} />
+            ))}
+          </div>
+          {onViewReport && reportContent !== undefined && reportCharts !== undefined && (
+            <div className={styles.reportFooter}>
+              <button
+                className={styles.reportBtn}
+                type="button"
+                onClick={() => onViewReport(reportContent, reportCharts)}
+              >
+                <span className={styles.reportIcon}>📄</span>
+                <span className={styles.reportText}>点击查看报告</span>
+                <span className={styles.reportArrow}>→</span>
+              </button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }

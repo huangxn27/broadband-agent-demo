@@ -6,6 +6,7 @@ import EventCards from './EventCards';
 import ChatSection from './ChatSection';
 import MessageList from '@/pages/Workspace/LeftPanel/ChatView/MessageList';
 import InputBubble from '@/pages/Workspace/LeftPanel/ChatView/InputBubble';
+import InsightPhasePanel from '@/pages/Workspace/LeftPanel/ChatView/InsightPhasePanel';
 import styles from './LeftPanel.module.css';
 
 import type { ChartItem } from '@/types/render';
@@ -17,7 +18,7 @@ interface Props {
 /**
  * Dashboard 左侧面板：
  * - 输入框始终固定在底部
- * - 发问后：Sheet（header + MessageList）从输入框上方滑入
+ * - 发问后：Sheet（header + 进度跟踪面板 + MessageList）从输入框上方滑入
  * - 点击 Sheet 标题栏可收起/展开，收起后紧贴输入框上侧
  */
 function DashboardLeftPanel({ onViewReport }: Props) {
@@ -25,6 +26,7 @@ function DashboardLeftPanel({ onViewReport }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetHeight, setSheetHeight] = useState(700);
   const [resizing, setResizing] = useState(false);
+  const [progressCollapsed, setProgressCollapsed] = useState(false);
   const contentAreaRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
@@ -57,6 +59,12 @@ function DashboardLeftPanel({ onViewReport }: Props) {
   const messages = convId ? (messagesByConvId[convId] ?? []) : [];
   const isStreaming = convId ? streamingConvIds.has(convId) : false;
   const isLoading = convId ? messagesLoadingConvIds.has(convId) : false;
+
+  // 从最后一条 assistant 消息中提取进度状态和报告数据
+  const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
+  const insightState = lastAssistant?.insightState ?? null;
+  const allBlocks = messages.flatMap((m) => m.blocks ?? []);
+  const reportBlock = [...allBlocks].reverse().find((b) => b.type === 'report_ready');
 
   const handleSend = (content: string, deepThinking: boolean) => {
     if (!convId || isStreaming) return;
@@ -132,7 +140,7 @@ function DashboardLeftPanel({ onViewReport }: Props) {
         </div>
         <ChatSection convId={convId} />
 
-        {/* 对话 Sheet：仅含 header + 消息列表，无自带输入框 */}
+        {/* 对话 Sheet：header + 进度跟踪 + 消息列表 */}
         <div className={sheetClass} style={sheetStyle}>
           {/* 拖拽手柄：按住上下拖动调整高度 */}
           <div className={styles.dragHandle} onMouseDown={onDragMouseDown} />
@@ -151,13 +159,25 @@ function DashboardLeftPanel({ onViewReport }: Props) {
             <span className={`${styles.chevron} ${sheetOpen ? styles.chevronOpen : styles.chevronClosed}`} />
           </div>
 
+          {/* 进度跟踪面板：有 insightState 时显示，悬浮在 sheetHeader 下方 */}
+          {insightState && (
+            <InsightPhasePanel
+              state={insightState}
+              collapsed={progressCollapsed}
+              onToggle={() => setProgressCollapsed((v) => !v)}
+              reportContent={reportBlock?.type === 'report_ready' ? reportBlock.content : undefined}
+              reportCharts={reportBlock?.type === 'report_ready' ? reportBlock.charts : undefined}
+              onViewReport={onViewReport}
+            />
+          )}
+
           <div className={styles.sheetBody}>
             <MessageList
               messages={messages}
               loading={isLoading}
               isStreaming={isStreaming}
               onEditMessage={() => {}}
-              onViewReport={onViewReport}
+              hideInsightPanel
             />
           </div>
         </div>

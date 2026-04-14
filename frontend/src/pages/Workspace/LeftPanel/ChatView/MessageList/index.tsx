@@ -17,9 +17,11 @@ interface Props {
   isStreaming: boolean;
   onEditMessage: (content: string) => void;
   onViewReport?: (content: string, charts: ChartItem[]) => void;
+  /** 为 true 时不在消息流中渲染 InsightPhasePanel（由外层面板负责渲染） */
+  hideInsightPanel?: boolean;
 }
 
-function MessageList({ messages, loading, isStreaming, onEditMessage, onViewReport }: Props) {
+function MessageList({ messages, loading, isStreaming, onEditMessage, onViewReport, hideInsightPanel }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -113,7 +115,7 @@ function MessageList({ messages, loading, isStreaming, onEditMessage, onViewRepo
                 return null;
               })}
               {/* phase 进度卡片始终渲染在 assistantGroup 最底部 */}
-              {msg.insightState && <InsightPhasePanel state={msg.insightState} />}
+              {msg.insightState && !hideInsightPanel && <InsightPhasePanel state={msg.insightState} />}
               {msg.error && <ErrorCard message={msg.error} />}
               {/* 最后一条 assistant 消息底部固定报告按钮 */}
               {reportBlock && reportBlock.type === 'report_ready' && onViewReport && (
