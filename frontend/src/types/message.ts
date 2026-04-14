@@ -43,7 +43,8 @@ export type MessageRole = 'user' | 'assistant';
 export type MessageBlock =
   | { type: 'thinking'; content: string; startedAt: number; endedAt?: number }
   | { type: 'step'; stepId: string }
-  | { type: 'text'; content: string };
+  | { type: 'text'; content: string }
+  | { type: 'report_ready'; content: string };
 
 export interface Message {
   id: string;

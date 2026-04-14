@@ -34,6 +34,9 @@ export interface DoneEvent {
 export interface ErrorEvent {
   message: string;
 }
+export interface ReportEvent {
+  content: string;
+}
 
 export type SseEventName =
   | 'thinking'
@@ -42,5 +45,6 @@ export type SseEventName =
   | 'sub_step'
   | 'step_end'
   | 'render'
+  | 'report'
   | 'done'
   | 'error';
