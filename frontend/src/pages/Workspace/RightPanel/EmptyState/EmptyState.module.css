@@ -17,7 +17,7 @@
 .topoImg {
   width: 80%;
   height: 80%;
-  object-fit: contain;
+  object-fit: scale-down;
   opacity: 0.6;
 }
 
