@@ -1,7 +1,7 @@
 .statBar {
   display: flex;
   align-items: stretch;
-  padding: 12px 8px;
+  padding: 20px 8px;
   gap: 0;
   border-bottom: 1px solid #1f2937;
 }
@@ -10,8 +10,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 4px 8px;
+  gap: 6px;
+  padding: 6px 14px;
   border-right: 1px solid #1f2937;
 }
 

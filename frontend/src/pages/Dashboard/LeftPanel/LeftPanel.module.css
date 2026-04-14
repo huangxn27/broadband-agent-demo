@@ -2,7 +2,10 @@
   width: 497px;
   flex-shrink: 0;
   height: 100%;
-  background: #0d1117;
+  /* 顶部光源：从带白感的冷蓝灰渐变到深底色 */
+  background:
+    radial-gradient(ellipse 110% 38% at 50% 0%, rgba(200, 214, 235, 0.10) 0%, transparent 70%),
+    #0d1117;
   border-right: 1px solid #1f2937;
   display: flex;
   flex-direction: column;
@@ -32,7 +35,7 @@
 
 /* 贴图区 */
 .bannerArea {
-  padding: 10px 16px;
+  padding: 18px 16px;
   flex-shrink: 0;
   border-bottom: 1px solid #1f2937;
 }
