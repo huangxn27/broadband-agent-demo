@@ -14,9 +14,9 @@ interface Props {
 
 /**
  * Dashboard 左侧面板：
- * - 默认模式：StatBar + Banner + EventCards + ChatSection + 输入框
- * - 发问后：底部 Sheet 从 contentArea 底部滑入，紧贴输入框上侧
- * - 点击 Sheet 标题栏可收起/展开
+ * - 输入框始终固定在底部
+ * - 发问后：Sheet（header + MessageList）从输入框上方滑入
+ * - 点击 Sheet 标题栏可收起/展开，收起后紧贴输入框上侧
  */
 function DashboardLeftPanel({ onViewReport }: Props) {
   const [convId, setConvId] = useState<string | null>(null);
@@ -61,7 +61,6 @@ function DashboardLeftPanel({ onViewReport }: Props) {
     sendMessage(content, deepThinking);
   };
 
-  // 三态 class
   const sheetClass = [
     styles.sheet,
     messages.length > 0 && !sheetOpen ? styles.sheetCollapsed : '',
@@ -70,7 +69,7 @@ function DashboardLeftPanel({ onViewReport }: Props) {
 
   return (
     <aside className={styles.leftPanel}>
-      {/* contentArea：sheet 的定位参照容器，flex:1 撑满 inputArea 以上的空间 */}
+      {/* contentArea：sheet 的定位参照容器，撑满输入框以上的全部空间 */}
       <div className={styles.contentArea}>
         <div className={styles.scrollArea}>
           <StatBar />
@@ -83,7 +82,7 @@ function DashboardLeftPanel({ onViewReport }: Props) {
         </div>
         <ChatSection convId={convId} />
 
-        {/* 对话 Sheet */}
+        {/* 对话 Sheet：仅含 header + 消息列表，无自带输入框 */}
         <div className={sheetClass}>
           <div
             className={styles.sheetHeader}
@@ -111,29 +110,18 @@ function DashboardLeftPanel({ onViewReport }: Props) {
               onViewReport={onViewReport}
             />
           </div>
-
-          <div className={styles.sheetInput}>
-            <InputBubble
-              inline
-              disabled={!convId || isStreaming}
-              disabledPlaceholder={isStreaming ? 'Agent 处理中...' : ''}
-              onSend={handleSend}
-            />
-          </div>
         </div>
       </div>
 
-      {/* 外部输入框：仅在对话未开始时显示，开始后由 sheet 内输入框接管 */}
-      {messages.length === 0 && (
-        <div className={styles.inputArea}>
-          <InputBubble
-            inline
-            disabled={!convId || isStreaming}
-            disabledPlaceholder={!convId ? '初始化中...' : 'Agent 处理中...'}
-            onSend={handleSend}
-          />
-        </div>
-      )}
+      {/* 输入框：始终固定在面板底部，位置永远不变 */}
+      <div className={styles.inputArea}>
+        <InputBubble
+          inline
+          disabled={!convId || isStreaming}
+          disabledPlaceholder={!convId ? '初始化中...' : 'Agent 处理中...'}
+          onSend={handleSend}
+        />
+      </div>
     </aside>
   );
 }

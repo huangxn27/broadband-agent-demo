@@ -173,9 +173,3 @@
   overflow: hidden;
 }
 
-/* Sheet 内跟进输入框 */
-.sheetInput {
-  flex-shrink: 0;
-  padding: 10px 16px 16px;
-  border-top: 1px solid #1f2937;
-}
