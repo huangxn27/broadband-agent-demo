@@ -28,7 +28,7 @@ function ConversationList() {
     if (creating) return;
     setCreating(true);
     try {
-      const conv = await create();
+      const conv = await create('用户级-新对话');
       openConversation(conv.id);
     } finally {
       setCreating(false);

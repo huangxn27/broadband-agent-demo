@@ -36,7 +36,7 @@ function DashboardLeftPanel({ onViewReport }: Props) {
     initiated.current = true;
     (async () => {
       try {
-        const conv = await createConversation('Dashboard 对话');
+        const conv = await createConversation('网络级-Dashboard 对话');
         setConvId(conv.id);
         setActiveConversation(conv.id);
       } catch {
