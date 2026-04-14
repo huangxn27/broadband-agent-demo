@@ -116,7 +116,7 @@ function ReportView({ content, charts, onBack }: Props) {
         </button>
       </div>
       <div className={styles.scroll}>
-        <div className={styles.body}>
+        <div className={styles.page}>
           {segments.map((seg, i) => {
             if (seg.kind === 'text') {
               return (
@@ -134,5 +134,6 @@ function ReportView({ content, charts, onBack }: Props) {
     </div>
   );
 }
+
 
 export default ReportView;
