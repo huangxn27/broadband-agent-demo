@@ -7,6 +7,7 @@ import StepCard from '../StepCard';
 import ConclusionCard from '../ConclusionCard';
 import InsightPhasePanel from '../InsightPhasePanel';
 import ErrorCard from '../ErrorCard';
+import ReportBubble from '@/pages/Dashboard/LeftPanel/ReportBubble';
 import styles from './MessageList.module.css';
 
 interface Props {
@@ -14,9 +15,10 @@ interface Props {
   loading: boolean;
   isStreaming: boolean;
   onEditMessage: (content: string) => void;
+  onViewReport?: (content: string) => void;
 }
 
-function MessageList({ messages, loading, isStreaming, onEditMessage }: Props) {
+function MessageList({ messages, loading, isStreaming, onEditMessage, onViewReport }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -96,6 +98,15 @@ function MessageList({ messages, loading, isStreaming, onEditMessage }: Props) {
                       key={`text-${i}`}
                       content={block.content}
                       streaming={msg.streaming}
+                    />
+                  );
+                }
+                if (block.type === 'report_ready' && onViewReport) {
+                  return (
+                    <ReportBubble
+                      key={`report-${i}`}
+                      content={block.content}
+                      onView={onViewReport}
                     />
                   );
                 }

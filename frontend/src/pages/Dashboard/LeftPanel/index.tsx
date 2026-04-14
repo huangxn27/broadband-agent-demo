@@ -8,12 +8,16 @@ import MessageList from '@/pages/Workspace/LeftPanel/ChatView/MessageList';
 import InputBubble from '@/pages/Workspace/LeftPanel/ChatView/InputBubble';
 import styles from './LeftPanel.module.css';
 
+interface Props {
+  onViewReport: (content: string) => void;
+}
+
 /**
  * Dashboard 左侧面板：
  * - 默认模式：StatBar + Banner + EventCards + ChatSection（固定结论 + 输入框）
  * - 对话模式：用户首次发问后，整个左侧切换为纯 QA 对话视图
  */
-function DashboardLeftPanel() {
+function DashboardLeftPanel({ onViewReport }: Props) {
   const [convId, setConvId] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState(false);
 
@@ -72,6 +76,7 @@ function DashboardLeftPanel() {
             loading={isLoading}
             isStreaming={isStreaming}
             onEditMessage={() => {}}
+            onViewReport={onViewReport}
           />
         </div>
         {inputBubble}
