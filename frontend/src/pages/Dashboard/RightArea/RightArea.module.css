@@ -31,9 +31,70 @@
   overflow: hidden;
 }
 
+/* 图片 + 标签整体缩放容器，transform-origin 保持中心 */
+.mapCanvas {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  transition: transform 0.2s ease;
+}
+
 .mapBgImg {
   width: 100%;
   height: 100%;
   object-fit: scale-down;
   display: block;
+}
+
+/* 缩放控件：右下角固定，不随 canvas 缩放 */
+.zoomControls {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: rgba(13, 17, 23, 0.85);
+  border: 1px solid #2d3748;
+  border-radius: 8px;
+  padding: 4px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.zoomBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: #d1d5db;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
+}
+
+.zoomBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f9fafb;
+}
+
+.zoomBtn:disabled {
+  color: #4b5563;
+  cursor: not-allowed;
+}
+
+.zoomLabel {
+  font-size: 11px;
+  color: #6b7280;
+  min-width: 36px;
+  text-align: center;
+  letter-spacing: 0.03em;
 }
