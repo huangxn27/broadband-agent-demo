@@ -52,33 +52,39 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 600px;
+  height: 700px;
   background: #0d1117;
   border-top: 1px solid #374151;
   border-radius: 12px 12px 0 0;
   display: flex;
   flex-direction: column;
-  /* 初始状态：隐藏在底部以下 */
-  transform: translateY(600px);
+  /* 初始状态：完全隐藏在底部以下 */
+  transform: translateY(700px);
   transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1);
   z-index: 10;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
 }
 
-/* 展开状态 */
-.sheetOpen {
+/* 收起态：仅露出 50px 标题栏 */
+.sheetCollapsed {
+  transform: translateY(650px);
+}
+
+/* 展开态：完整 700px */
+.sheetExpanded {
   transform: translateY(0);
 }
 
-/* 标题栏 */
+/* 标题栏——固定 50px，收起/展开时均可见 */
 .sheetHeader {
+  height: 50px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 18px;
+  padding: 0 18px;
   border-bottom: 1px solid #1f2937;
   cursor: pointer;
-  flex-shrink: 0;
   user-select: none;
   transition: background 0.15s;
 }
@@ -96,8 +102,16 @@
 
 .sheetArrow {
   font-size: 14px;
+  transition: color 0.15s, transform 0.3s;
   color: #6b7280;
-  transition: color 0.15s;
+}
+
+.sheetArrowDown {
+  color: #6b7280;
+}
+
+.sheetArrowUp {
+  color: #3b82f6;
 }
 
 .sheetHeader:hover .sheetArrow {
@@ -114,7 +128,6 @@
 /* 底部输入框 */
 .sheetInput {
   flex-shrink: 0;
-  padding: 0 16px 16px;
+  padding: 10px 16px 16px;
   border-top: 1px solid #1f2937;
-  padding-top: 10px;
 }

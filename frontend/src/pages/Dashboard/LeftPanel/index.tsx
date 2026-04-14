@@ -79,12 +79,23 @@ function DashboardLeftPanel({ onViewReport }: Props) {
         />
       </div>
 
-      {/* 对话 Sheet：从底部滑入 */}
-      <div className={`${styles.sheet} ${sheetOpen ? styles.sheetOpen : ''}`}>
-        {/* 标题栏：点击收起 */}
-        <div className={styles.sheetHeader} onClick={() => setSheetOpen(false)}>
+      {/* 对话 Sheet：三态 — 隐藏 / 50px 横条 / 700px 展开 */}
+      <div
+        className={[
+          styles.sheet,
+          messages.length > 0 && !sheetOpen ? styles.sheetCollapsed : '',
+          sheetOpen ? styles.sheetExpanded : '',
+        ].join(' ')}
+      >
+        {/* 标题栏：展开时点击收起；收起时点击展开 */}
+        <div
+          className={styles.sheetHeader}
+          onClick={() => setSheetOpen((prev) => !prev)}
+        >
           <span className={styles.sheetTitle}>网络级分析</span>
-          <span className={styles.sheetArrow}>↓</span>
+          <span className={`${styles.sheetArrow} ${sheetOpen ? styles.sheetArrowDown : styles.sheetArrowUp}`}>
+            {sheetOpen ? '↓' : '↑'}
+          </span>
         </div>
 
         {/* 消息列表 */}
