@@ -96,9 +96,7 @@ function DashboardLeftPanel({ onViewReport }: Props) {
                 </span>
               )}
             </div>
-            <span className={`${styles.sheetArrow} ${sheetOpen ? styles.sheetArrowDown : styles.sheetArrowUp}`}>
-              {sheetOpen ? '↓' : '↑'}
-            </span>
+            <span className={`${styles.chevron} ${sheetOpen ? styles.chevronOpen : styles.chevronClosed}`} />
           </div>
 
           <div className={styles.sheetBody}>
