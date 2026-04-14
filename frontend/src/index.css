@@ -1,6 +1,6 @@
 :root {
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
   color-scheme: dark;
   -webkit-font-smoothing: antialiased;
@@ -9,10 +9,6 @@
 
 * {
   box-sizing: border-box;
-}
-
-html {
-  zoom: 1.1;
 }
 
 html,

@@ -1,5 +1,5 @@
 .sidebar {
-  width: 60px;
+  width: 66px;
   flex-shrink: 0;
   height: 100%;
   background: #0a0f14;
@@ -27,13 +27,13 @@
 }
 
 .iconBtn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
   border: none;
   background: transparent;
   color: #6b7280;
-  font-size: 18px;
+  font-size: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
