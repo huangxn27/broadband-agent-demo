@@ -4,7 +4,7 @@ import { getMessages, sendMessageStream } from '@/api/messages';
 import { useConversationStore } from '@/store/conversationStore';
 import { parseSseStream } from '@/utils/sseParser';
 import type { Message, Step, SubStep, MessageBlock } from '@/types/message';
-import type { RenderBlock } from '@/types/render';
+import type { RenderBlock, ChartItem } from '@/types/render';
 import { InsightEventParser, applyInsightEvent } from '@/utils/insightEventParser';
 import type {
   DoneEvent,
@@ -40,6 +40,12 @@ interface WorkspaceState {
   // insight 流式 parser（per conversation）
   _insightParsers: Record<string, InsightEventParser>;
 
+  // report 图表累积缓冲（per conversation，等 markdownReport 到达后一并存入 block）
+  _reportChartsBuf: Record<string, ChartItem[]>;
+
+  // Workspace 右侧报告视图（点击 ReportBubble 后设置）
+  activeReport: { content: string; charts: ChartItem[] } | null;
+
   // actions
   setLeftView: (view: LeftView) => void;
   setActiveConversation: (id: string | null) => void;
@@ -49,6 +55,7 @@ interface WorkspaceState {
   sendMessage: (content: string, deepThinking: boolean) => Promise<void>;
   abortStream: (convId?: string) => void;
   setRenders: (blocks: RenderBlock[]) => void;
+  setActiveReport: (report: { content: string; charts: ChartItem[] } | null) => void;
 }
 
 function newId(prefix: string) {
@@ -81,18 +88,21 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   currentRenders: [],
   _abortCtrls: {},
   _insightParsers: {},
+  _reportChartsBuf: {},
+  activeReport: null,
 
   setLeftView: (view) => set({ leftView: view }),
   setActiveConversation: (id) => set({ activeConversationId: id }),
 
   openConversation: (id) => {
-    // 切换会话时不中止其他会话的流，只切换视图
-    set({ leftView: 'chat', activeConversationId: id });
+    set({ leftView: 'chat', activeConversationId: id, activeReport: null });
   },
 
   backToList: () => {
-    set({ leftView: 'list' });
+    set({ leftView: 'list', activeReport: null });
   },
+
+  setActiveReport: (report) => set({ activeReport: report }),
 
   loadMessages: async (id) => {
     // 已有缓存则不重复请求
@@ -379,10 +389,32 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
             }
             case 'report': {
               const d = e.data as ReportEvent;
-              updateAssistant((m) => ({
-                ...m,
-                blocks: [...(m.blocks ?? []), { type: 'report_ready', content: d.content }],
-              }));
+              const { charts, markdownReport } = d.renderData;
+              // 有图表数据：累积到缓冲区
+              if (charts.length > 0) {
+                set((s) => ({
+                  _reportChartsBuf: {
+                    ...s._reportChartsBuf,
+                    [convId]: [...(s._reportChartsBuf[convId] ?? []), ...charts],
+                  },
+                }));
+              }
+              // markdownReport 非空：报告完整，写入 report_ready block 并清空缓冲
+              if (markdownReport.trim()) {
+                const accumulated = get()._reportChartsBuf[convId] ?? [];
+                updateAssistant((m) => ({
+                  ...m,
+                  blocks: [
+                    ...(m.blocks ?? []),
+                    { type: 'report_ready', content: markdownReport, charts: accumulated },
+                  ],
+                }));
+                set((s) => {
+                  const buf = { ...s._reportChartsBuf };
+                  delete buf[convId];
+                  return { _reportChartsBuf: buf };
+                });
+              }
               break;
             }
             case 'done': {
