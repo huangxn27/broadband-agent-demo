@@ -15,14 +15,9 @@
 }
 
 .topoImg {
-  width: 200px;
-  height: auto;
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
   opacity: 0.6;
 }
 
-.imageHint {
-  font-size: 13px;
-  color: #374151;
-  margin: 0;
-  text-align: center;
-}
