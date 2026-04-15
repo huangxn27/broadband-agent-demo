@@ -9,6 +9,7 @@ function Sidebar() {
   const location = useLocation();
   const leftView = useWorkspaceStore((s) => s.leftView);
   const backToList = useWorkspaceStore((s) => s.backToList);
+  const startNewConversation = useWorkspaceStore((s) => s.startNewConversation);
 
   const isDashboard = location.pathname === '/' || location.pathname === '/dashboard';
   const isWorkspace = location.pathname === '/workspace';
@@ -33,7 +34,7 @@ function Sidebar() {
           <button
             type="button"
             className={`${styles.iconBtn} ${isUserQuery ? styles.active : ''}`}
-            onClick={() => navigate('/workspace', { state: { newConversation: true } })}
+            onClick={() => { navigate('/workspace'); startNewConversation(); }}
             aria-label="用户级问题查询入口"
           >
             <SearchOutlined />

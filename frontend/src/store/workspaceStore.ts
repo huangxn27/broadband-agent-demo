@@ -51,6 +51,7 @@ interface WorkspaceState {
   setLeftView: (view: LeftView) => void;
   setActiveConversation: (id: string | null) => void;
   openConversation: (id: string) => void;
+  startNewConversation: () => void;
   backToList: () => void;
   loadMessages: (id: string) => Promise<void>;
   sendMessage: (content: string, deepThinking: boolean) => Promise<void>;
@@ -101,6 +102,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
 
   openConversation: (id) => {
     set({ leftView: 'chat', activeConversationId: id, activeReport: null });
+  },
+
+  startNewConversation: () => {
+    set({ leftView: 'chat', activeConversationId: null, activeReport: null });
   },
 
   backToList: () => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Button, Empty, Modal, Skeleton, Tooltip } from 'antd';
 import { PlusOutlined, DeleteOutlined, MessageOutlined, LoadingOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -24,24 +24,17 @@ function formatTime(iso: string) {
 }
 
 function ConversationList() {
-  const { list, loading, fetch, create, remove, sources } = useConversationStore();
+  const { list, loading, fetch, remove, sources } = useConversationStore();
   const openConversation = useWorkspaceStore((s) => s.openConversation);
+  const startNewConversation = useWorkspaceStore((s) => s.startNewConversation);
   const streamingConvIds = useWorkspaceStore((s) => s.streamingConvIds);
-  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     fetch();
   }, [fetch]);
 
-  const handleCreate = async () => {
-    if (creating) return;
-    setCreating(true);
-    try {
-      const conv = await create();
-      openConversation(conv.id);
-    } finally {
-      setCreating(false);
-    }
+  const handleCreate = () => {
+    startNewConversation();
   };
 
   const handleClick = (conv: Conversation) => {
@@ -68,7 +61,6 @@ function ConversationList() {
           type="primary"
           icon={<PlusOutlined />}
           onClick={handleCreate}
-          loading={creating}
           size="small"
         >
           新建对话
