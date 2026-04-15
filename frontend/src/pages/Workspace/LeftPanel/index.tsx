@@ -14,7 +14,6 @@ function LeftPanel({ prefillMessage, newConversation }: Props) {
   const leftView = useWorkspaceStore((s) => s.leftView);
   const setLeftView = useWorkspaceStore((s) => s.setLeftView);
   const setActiveConversation = useWorkspaceStore((s) => s.setActiveConversation);
-  const openConversation = useWorkspaceStore((s) => s.openConversation);
   const createConversation = useConversationStore((s) => s.create);
   const newConvHandled = useRef(false);
 
@@ -29,20 +28,17 @@ function LeftPanel({ prefillMessage, newConversation }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefillMessage]);
 
-  // 从导航栏「用户级问题查询入口」点击进入时，新建会话并切换到 chat 视图
+  // 从导航栏「用户级问题查询入口」点击进入时，只切到 chat 视图；会话在首次发消息时懒创建
   useEffect(() => {
     if (!newConversation || newConvHandled.current) return;
     newConvHandled.current = true;
-    (async () => {
-      const conv = await createConversation('用户级-新对话');
-      openConversation(conv.id);
-    })();
+    setLeftView('chat');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newConversation]);
 
   return (
     <aside className={styles.leftPanel}>
-      {leftView === 'list' ? <ConversationList /> : <ChatView prefillMessage={prefillMessage} />}
+      {leftView === 'list' ? <ConversationList /> : <ChatView prefillMessage={prefillMessage} lazySource="workspace" />}
     </aside>
   );
 }

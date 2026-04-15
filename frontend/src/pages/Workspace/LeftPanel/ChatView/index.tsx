@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import { useConversationStore } from '@/store/conversationStore';
@@ -6,15 +6,19 @@ import MessageList from './MessageList';
 import InputBubble from './InputBubble';
 import InsightPhasePanel from './InsightPhasePanel';
 import styles from './ChatView.module.css';
+import type { ConversationSource } from '@/types/conversation';
 
 interface Props {
   prefillMessage?: string;
+  /** 无 activeId 时首次发消息才创建会话，并标记该来源 */
+  lazySource?: ConversationSource;
 }
 
-function ChatView({ prefillMessage }: Props) {
+function ChatView({ prefillMessage, lazySource }: Props) {
   const backToList = useWorkspaceStore((s) => s.backToList);
   const setActiveReport = useWorkspaceStore((s) => s.setActiveReport);
   const activeId = useWorkspaceStore((s) => s.activeConversationId);
+  const setActiveConversation = useWorkspaceStore((s) => s.setActiveConversation);
   const messagesByConvId = useWorkspaceStore((s) => s.messagesByConvId);
   const messagesLoadingConvIds = useWorkspaceStore((s) => s.messagesLoadingConvIds);
   const streamingConvIds = useWorkspaceStore((s) => s.streamingConvIds);
@@ -23,10 +27,12 @@ function ChatView({ prefillMessage }: Props) {
   const abortStream = useWorkspaceStore((s) => s.abortStream);
 
   const conversations = useConversationStore((s) => s.list);
+  const createConversation = useConversationStore((s) => s.create);
   const updateTitle = useConversationStore((s) => s.updateTitle);
   const setSource = useConversationStore((s) => s.setSource);
   const [editDraft, setEditDraft] = useState(prefillMessage ?? '');
   const [progressCollapsed, setProgressCollapsed] = useState(false);
+  const creating = useRef(false);
 
   const messages = activeId ? (messagesByConvId[activeId] ?? []) : [];
   const messagesLoading = activeId ? messagesLoadingConvIds.has(activeId) : false;
@@ -110,13 +116,33 @@ function ChatView({ prefillMessage }: Props) {
       </div>
 
       <InputBubble
-        disabled={!activeId}
-        onSend={(content, deepThinking) => {
-          if (isStreaming) return;
+        disabled={isStreaming}
+        onSend={async (content, deepThinking) => {
+          if (isStreaming || creating.current) return;
           setEditDraft('');
-          if (messages.length === 0 && activeId) {
-            setSource(activeId, 'workspace');
-            updateTitle(activeId, content.slice(0, 30));
+
+          let convId = activeId;
+
+          // lazySource 模式：无 activeId 时首次发消息才创建会话
+          if (!convId && lazySource) {
+            creating.current = true;
+            try {
+              const conv = await createConversation();
+              setSource(conv.id, lazySource);
+              setActiveConversation(conv.id);
+              convId = conv.id;
+            } catch {
+              creating.current = false;
+              return;
+            }
+            creating.current = false;
+          }
+
+          if (!convId) return;
+
+          if (messages.length === 0) {
+            updateTitle(convId, content.slice(0, 30));
+            if (!lazySource) setSource(convId, 'workspace');
           }
           sendMessage(content, deepThinking);
         }}
