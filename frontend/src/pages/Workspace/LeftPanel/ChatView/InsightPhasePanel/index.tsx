@@ -222,12 +222,17 @@ function InsightPhasePanel({
     dragging ? styles.noTransition : '',
   ].filter(Boolean).join(' ');
 
+  const wrapClass = [
+    isPanelMode ? styles.panelFixedWrap : '',
+    isPanelMode && collapsed ? styles.panelCollapsedWrap : '',
+  ].filter(Boolean).join(' ') || undefined;
+
   // 拖拽后使用显式 height；否则 CSS max-height: 350px 自适应内容
   const panelStyle = (isPanelMode && !collapsed && panelHeight !== null)
     ? { height: panelHeight }
     : undefined;
 
-  return (
+  const panelContent = (
     <div className={panelClass} style={panelStyle} ref={panelRef}>
       {/* 头部 */}
       <div
@@ -292,6 +297,12 @@ function InsightPhasePanel({
       )}
     </div>
   );
+
+  // 面板模式：用包装层承载 drop-shadow（filter 跟随 clip-path 形状）
+  if (isPanelMode) {
+    return <div className={wrapClass}>{panelContent}</div>;
+  }
+  return panelContent;
 }
 
 export default InsightPhasePanel;
