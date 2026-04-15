@@ -115,8 +115,22 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   setActiveReport: (report) => set({ activeReport: report }),
 
   loadMessages: async (id) => {
-    // 已有缓存则不重复请求
-    if (get().messagesByConvId[id]) return;
+    // 已有缓存则不重复请求，但仍需同步右侧渲染
+    if (get().messagesByConvId[id]) {
+      if (get().activeConversationId === id) {
+        const cached = get().messagesByConvId[id];
+        let lastRenders: RenderBlock[] = [];
+        for (let i = cached.length - 1; i >= 0; i--) {
+          const m = cached[i];
+          if (m.role === 'assistant' && m.renderBlocks && m.renderBlocks.length > 0) {
+            lastRenders = m.renderBlocks;
+            break;
+          }
+        }
+        set({ currentRenders: lastRenders });
+      }
+      return;
+    }
 
     set((s) => ({ messagesLoadingConvIds: new Set([...s.messagesLoadingConvIds, id]) }));
     try {
