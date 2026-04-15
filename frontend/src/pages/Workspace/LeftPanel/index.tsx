@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useWorkspaceStore } from '@/store/workspaceStore';
-import { useConversationStore } from '@/store/conversationStore';
 import ConversationList from './ConversationList';
 import ChatView from './ChatView';
 import styles from './LeftPanel.module.css';
@@ -11,18 +10,12 @@ interface Props {
 
 function LeftPanel({ prefillMessage }: Props) {
   const leftView = useWorkspaceStore((s) => s.leftView);
-  const setLeftView = useWorkspaceStore((s) => s.setLeftView);
-  const setActiveConversation = useWorkspaceStore((s) => s.setActiveConversation);
-  const createConversation = useConversationStore((s) => s.create);
+  const startNewConversation = useWorkspaceStore((s) => s.startNewConversation);
 
-  // 从 Dashboard 跳转过来时，立即切到 chat 视图（避免闪列表），再异步建会话
+  // 从 Dashboard 跳转过来时，切到空白 chat 视图；会话在首次发消息时懒创建
   useEffect(() => {
     if (!prefillMessage) return;
-    setLeftView('chat');
-    (async () => {
-      const conv = await createConversation('新对话');
-      setActiveConversation(conv.id);
-    })();
+    startNewConversation();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefillMessage]);
 
