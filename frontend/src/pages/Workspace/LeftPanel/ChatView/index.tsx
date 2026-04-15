@@ -7,6 +7,7 @@ import InputBubble from './InputBubble';
 import InsightPhasePanel from './InsightPhasePanel';
 import styles from './ChatView.module.css';
 import type { ConversationSource } from '@/types/conversation';
+import type { Message } from '@/types/message';
 
 interface Props {
   prefillMessage?: string;
@@ -15,6 +16,23 @@ interface Props {
 }
 
 function ChatView({ prefillMessage, lazySource }: Props) {
+  const fixedPrefillReply = useMemo<Message[]>(
+    () =>
+      prefillMessage
+        ? [
+            {
+              id: 'prefill_fixed_reply',
+              conversationId: '',
+              role: 'assistant',
+              content: '这是一条固定信息返回',
+              blocks: [{ type: 'text', content: '这是一条固定信息返回' }],
+              createdAt: new Date(0).toISOString(),
+            },
+          ]
+        : [],
+    [prefillMessage],
+  );
+
   const backToList = useWorkspaceStore((s) => s.backToList);
   const setActiveReport = useWorkspaceStore((s) => s.setActiveReport);
   const activeId = useWorkspaceStore((s) => s.activeConversationId);
@@ -35,6 +53,7 @@ function ChatView({ prefillMessage, lazySource }: Props) {
   const creating = useRef(false);
 
   const messages = activeId ? (messagesByConvId[activeId] ?? []) : [];
+  const visibleMessages = messages.length === 0 ? fixedPrefillReply : messages;
   const messagesLoading = activeId ? messagesLoadingConvIds.has(activeId) : false;
   const isStreaming = activeId ? streamingConvIds.has(activeId) : false;
 
@@ -50,10 +69,10 @@ function ChatView({ prefillMessage, lazySource }: Props) {
   }, [activeId, loadMessages]);
 
   // 从最后一条 assistant 消息中提取进度数据
-  const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant');
+  const lastAssistant = [...visibleMessages].reverse().find((m) => m.role === 'assistant');
   const insightState = lastAssistant?.insightState ?? null;
   const steps = lastAssistant?.steps ?? [];
-  const allBlocks = messages.flatMap((m) => m.blocks ?? []);
+  const allBlocks = visibleMessages.flatMap((m) => m.blocks ?? []);
   const reportBlock = [...allBlocks].reverse().find((b) => b.type === 'report_ready');
 
   // 有任意 step 或 insightState → 显示进度跟踪面板
@@ -91,7 +110,7 @@ function ChatView({ prefillMessage, lazySource }: Props) {
 
       <div className={styles.body}>
         <MessageList
-          messages={messages}
+          messages={visibleMessages}
           loading={messagesLoading}
           isStreaming={isStreaming}
           onEditMessage={(content) => {
