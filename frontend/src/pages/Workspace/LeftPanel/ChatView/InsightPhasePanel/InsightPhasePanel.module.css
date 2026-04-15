@@ -13,12 +13,27 @@
 /* drop-shadow 包装层：使 filter 不裁切内容 */
 .panelFixedWrap {
   flex-shrink: 0;
-  /* 顶部蓝色光晕（filter: drop-shadow 跟随 clip-path 形状） */
+  /* 光晕跟随 clip-path 形状（顶部蓝色 + 底部深色阴影） */
   filter:
     drop-shadow(0 -1px 10px rgba(59, 130, 246, 0.22))
-    drop-shadow(0 6px 28px rgba(0, 0, 0, 0.55));
+    drop-shadow(0 8px 20px rgba(0, 0, 0, 0.7));
   /* 收起时只显示标题栏高度 */
   transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* wrapper 底部渐变分隔线（在 clip-path 外部，始终可见） */
+.panelFixedWrap::after {
+  content: '';
+  display: block;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(59, 130, 246, 0.35) 20%,
+    rgba(99, 102, 241, 0.45) 50%,
+    rgba(59, 130, 246, 0.35) 80%,
+    transparent 100%
+  );
+  margin: 0 8px;
 }
 
 .panelFixed {
@@ -29,13 +44,15 @@
   max-height: 350px;
   /* height 由内容自适应；拖拽时通过 inline style 覆盖 */
 
-  /* 顶部两个切角 */
+  /* 四角切角（顶部 12px，底部 8px） */
   clip-path: polygon(
     12px 0%,
     calc(100% - 12px) 0%,
     100% 12px,
-    100% 100%,
-    0% 100%,
+    100% calc(100% - 8px),
+    calc(100% - 8px) 100%,
+    8px 100%,
+    0% calc(100% - 8px),
     0% 12px
   );
 
