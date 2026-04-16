@@ -1,0 +1,104 @@
+.userBubble {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 8px;
+}
+
+.userBubbleInner {
+  max-width: 90%;
+  padding: 10px 14px;
+  background: #1677ff;
+  color: #fff;
+  border-radius: 16px 16px 4px 16px;
+  font-size: 14px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.systemBubble {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 8px;
+}
+
+.systemBubbleInner {
+  max-width: 92%;
+  padding: 10px 14px;
+  background: #1c2333;
+  border: 1px solid #30363d;
+  color: #c9d1d9;
+  border-radius: 4px 16px 16px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.comparisonBubble {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 8px;
+}
+
+.comparisonCard {
+  max-width: 98%;
+  padding: 14px 16px;
+  background: #161b22;
+  border: 1px solid #238636;
+  border-radius: 8px;
+  color: #c9d1d9;
+  font-size: 13px;
+}
+
+.compTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3fb950;
+  margin-bottom: 10px;
+}
+
+.compMeasures {
+  font-size: 12px;
+  color: #8b949e;
+  margin-bottom: 12px;
+}
+
+.compTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.compTable th {
+  padding: 5px 10px;
+  text-align: right;
+  color: #8b949e;
+  font-weight: 500;
+  border-bottom: 1px solid #30363d;
+}
+
+.compTable th:first-child {
+  text-align: left;
+}
+
+.compTable td {
+  padding: 5px 10px;
+  text-align: right;
+  border-bottom: 1px solid #21262d;
+}
+
+.compTable td:first-child {
+  text-align: left;
+  color: #c9d1d9;
+}
+
+.improved {
+  color: #3fb950;
+  font-weight: 600;
+}
+
+.worsened {
+  color: #f85149;
+  font-weight: 600;
+}

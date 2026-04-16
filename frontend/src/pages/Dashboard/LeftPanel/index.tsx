@@ -1,6 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useWorkspaceStore } from '@/store/workspaceStore';
 import { useConversationStore } from '@/store/conversationStore';
+import { useSimulationStore } from '@/store/simulationStore';
+import { matchSimCommand, FAULT_NAMES } from '@/utils/simulationMatcher';
 import StatBar from './StatBar';
 import EventCards from './EventCards';
 import ChatSection from './ChatSection';
@@ -30,12 +33,16 @@ function DashboardLeftPanel({ onViewReport }: Props) {
   const contentAreaRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
+  const simConvIdRef = useRef<string | null>(null);
+
+  const navigate = useNavigate();
 
   const messagesByConvId = useWorkspaceStore((s) => s.messagesByConvId);
   const streamingConvIds = useWorkspaceStore((s) => s.streamingConvIds);
   const messagesLoadingConvIds = useWorkspaceStore((s) => s.messagesLoadingConvIds);
   const sendMessage = useWorkspaceStore((s) => s.sendMessage);
   const setActiveConversation = useWorkspaceStore((s) => s.setActiveConversation);
+  const startNewConversation = useWorkspaceStore((s) => s.startNewConversation);
   const createConversation = useConversationStore((s) => s.create);
   const updateTitle = useConversationStore((s) => s.updateTitle);
   const setSource = useConversationStore((s) => s.setSource);
@@ -53,6 +60,55 @@ function DashboardLeftPanel({ onViewReport }: Props) {
   const reportBlock = [...allBlocks].reverse().find((b) => b.type === 'report_ready');
 
   const handleSend = async (content: string, deepThinking: boolean) => {
+    // ── Simulation command intercept — redirect to Workspace ─────────────────
+    const simAction = matchSimCommand(content);
+    if (simAction !== null) {
+      const simStore = useSimulationStore.getState();
+      // Switch workspace to chat view before navigating
+      startNewConversation();
+      navigate('/workspace');
+
+      if (simAction.type === 'unknown_sim_cmd') {
+        simStore.addUserEvent(content);
+        const isUnknownFault = /^仿真故障/.test(content);
+        simStore.addSystemEvent(
+          isUnknownFault
+            ? `未识别的故障名称。支持的故障：${FAULT_NAMES.join(' / ')}`
+            : `支持的仿真指令：仿真：启动 / 仿真故障：<故障名>`,
+        );
+        return;
+      }
+
+      if (simAction.type === 'start') {
+        const simConvId = `sim-${Date.now()}`;
+        simConvIdRef.current = simConvId;
+        simStore.addUserEvent('仿真：启动');
+        void simStore.startSimulation(simConvId);
+        return;
+      }
+
+      if (simAction.type === 'inject_fault') {
+        if (!simStore.active) {
+          simStore.addUserEvent(content);
+          simStore.addSystemEvent('请先输入"仿真：启动"运行基线仿真，再注入故障。');
+          return;
+        }
+        if (simStore.streaming) {
+          simStore.addUserEvent(content);
+          simStore.addSystemEvent('仿真进行中，请等待当前段完成后再注入故障。');
+          return;
+        }
+        const simConvId = simConvIdRef.current ?? simStore.convId ?? `sim-${Date.now()}`;
+        simConvIdRef.current = simConvId;
+        simStore.addUserEvent(content);
+        void simStore.injectFault(simConvId, simAction.faultName);
+        return;
+      }
+
+      return;
+    }
+
+    // ── Regular Agent flow ────────────────────────────────────────────────────
     if (isStreaming || creating.current) return;
 
     let activeConvId = convId;

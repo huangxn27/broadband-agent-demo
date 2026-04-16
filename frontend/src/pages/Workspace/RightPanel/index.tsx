@@ -2,10 +2,12 @@ import { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useWorkspaceStore } from '@/store/workspaceStore';
+import { useSimulationStore } from '@/store/simulationStore';
 import EmptyState from './EmptyState';
 import ImageDisplay from './ImageDisplay';
 import InsightDisplay from './InsightDisplay';
 import ReportView from '@/pages/Dashboard/RightArea/ReportView';
+import SimulationView from './SimulationView';
 import styles from './RightPanel.module.css';
 import type { RenderBlock } from '@/types/render';
 import type { InsightState } from '@/types/insight';
@@ -119,6 +121,7 @@ function RightPanel({ fromEventCard }: Props) {
   const messages = useWorkspaceStore((s) => s.messagesByConvId[activeId ?? ''] ?? []);
   const activeReport = useWorkspaceStore((s) => s.activeReport);
   const setActiveReport = useWorkspaceStore((s) => s.setActiveReport);
+  const simActive = useSimulationStore((s) => s.active);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // 取最新 assistant 消息的 insightState 用于 phase 名查找
@@ -129,6 +132,15 @@ function RightPanel({ fromEventCard }: Props) {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [currentRenders.length]);
+
+  // 仿真视图优先：完全替换右侧面板
+  if (simActive) {
+    return (
+      <main className={styles.rightPanel} style={{ padding: 0, overflow: 'hidden' }}>
+        <SimulationView />
+      </main>
+    );
+  }
 
   // 会话列表状态：右侧完全空白
   if (leftView === 'list') {
