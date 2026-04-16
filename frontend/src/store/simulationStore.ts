@@ -89,6 +89,7 @@ interface SimulationState {
   _eventSeq: number;
 
   pendingFaultName: string;
+  resetKey: number;
 
   // ── actions ──
   addUserEvent: (text: string) => void;
@@ -128,6 +129,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   convId: null,
   currentFaultName: '',
   pendingFaultName: '',
+  resetKey: 0,
   simEvents: [],
   _abortCtrl: null,
   _lastSegType: '',
@@ -163,6 +165,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       summaries: [],
       currentFaultName: '',
       pendingFaultName: faultName ?? '',
+      resetKey: s.resetKey + 1,
       _abortCtrl: ctrl,
       _lastSegType: '',
       simEvents: [
@@ -351,7 +354,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
 
   reset: () => {
     get()._abortCtrl?.abort();
-    set({
+    set((s) => ({
       active: false,
       streaming: false,
       phase: 'idle',
@@ -361,10 +364,11 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       convId: null,
       currentFaultName: '',
       pendingFaultName: '',
+      resetKey: s.resetKey + 1,
       simEvents: [],
       _abortCtrl: null,
       _lastSegType: '',
-    });
+    }));
   },
 }));
 
