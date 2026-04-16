@@ -230,9 +230,10 @@ function TimeSeriesChart(props: Props) {
     // Skip if nothing relevant changed and we already have data
     if (!lenChanged && !streamingChanged && prevLenRef.current > 0) return;
 
-    const isAppend = xData.length > prevLenRef.current;
-    // notMerge=false (merge) when appending; notMerge=true (replace) when state changes
-    chart.setOption(buildOption(props), !isAppend);
+    // notMerge=true 仅在初始化时使用；streaming→false 只需 merge 更新 dataZoom/grid，
+    // 无需重建 series，避免大数据量下的全量重绘卡顿
+    const needsFullRebuild = prevLenRef.current === 0;
+    chart.setOption(buildOption(props), needsFullRebuild);
     // Ensure canvas dimensions are correct (guards against 0-width init edge cases)
     chart.resize();
     prevLenRef.current = xData.length;
