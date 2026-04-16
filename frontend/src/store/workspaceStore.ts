@@ -11,6 +11,7 @@ import type {
   ErrorEvent as SseErrorEvent,
   ReportEvent,
   WifiResultEvent,
+  ExperienceAssuranceResultEvent,
   StepStartEvent,
   StepEndEvent,
   SubStepEvent,
@@ -94,6 +95,14 @@ function rebuildBlocks(m: Message): MessageBlock[] {
       charts: allCharts,
     });
   }
+
+  // 从 renderBlocks 重建 experience_assurance block（历史回放）
+  for (const rb of m.renderBlocks ?? []) {
+    if (rb.renderType === 'experience_assurance') {
+      blocks.push({ type: 'experience_assurance', data: rb.renderData });
+    }
+  }
+
   return blocks;
 }
 
@@ -457,6 +466,19 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
               if (get().activeConversationId === convId) {
                 set((s) => ({ currentRenders: [...s.currentRenders, ...imageBlocks] }));
               }
+              break;
+            }
+            case 'experience_assurance_result': {
+              const d = e.data as ExperienceAssuranceResultEvent;
+              const rb: RenderBlock = {
+                renderType: 'experience_assurance',
+                renderData: d.renderData,
+              };
+              updateAssistant((m) => ({
+                ...m,
+                blocks: [...(m.blocks ?? []), { type: 'experience_assurance', data: d.renderData }],
+                renderBlocks: [...(m.renderBlocks ?? []), rb],
+              }));
               break;
             }
             case 'report': {

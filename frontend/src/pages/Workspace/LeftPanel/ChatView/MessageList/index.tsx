@@ -9,6 +9,7 @@ import ConclusionCard from '../ConclusionCard';
 import InsightPhasePanel from '../InsightPhasePanel';
 import ErrorCard from '../ErrorCard';
 import ReportFloatBtn from '@/components/ReportFloatBtn';
+import ExperienceAssuranceCard from '../ExperienceAssuranceCard';
 import styles from './MessageList.module.css';
 
 interface Props {
@@ -111,6 +112,9 @@ function MessageList({ messages, loading, isStreaming, onEditMessage, onViewRepo
                 }
                 if (block.type === 'report_ready') {
                   return null;
+                }
+                if (block.type === 'experience_assurance') {
+                  return <ExperienceAssuranceCard key={`ea-${i}`} data={block.data} />;
                 }
                 return null;
               })}
