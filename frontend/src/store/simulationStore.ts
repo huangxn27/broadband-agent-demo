@@ -416,8 +416,9 @@ function _handleSegEnd(payload: SimSegEndPayload): void {
     if (payload.segType === 'baseline') {
       const { pendingFaultName, convId } = s;
       if (pendingFaultName && convId) {
+        // 保持 streaming: true，避免图表视窗跳回基线全览再重新滚动
         setTimeout(() => { void useSimulationStore.getState().injectFault(convId, pendingFaultName); }, 0);
-        return { summaries, streaming: false, pendingFaultName: '', _eventSeq: seq };
+        return { summaries, pendingFaultName: '', _eventSeq: seq };
       }
       return { summaries, streaming: false, _eventSeq: seq };
     }
@@ -429,9 +430,9 @@ function _handleSegEnd(payload: SimSegEndPayload): void {
         kind: 'system',
         text: diagText,
       };
-      // Auto-trigger remediation after this state update
+      // 保持 streaming: true，避免图表视窗跳回全览再重新滚动
       setTimeout(() => { void useSimulationStore.getState().remediate(); }, 0);
-      return { summaries, simEvents: [...s.simEvents, newEvt], _eventSeq: seq + 1 };
+      return { summaries, streaming: true, simEvents: [...s.simEvents, newEvt], _eventSeq: seq + 1 };
     }
 
     if (payload.segType === 'recovery') {
