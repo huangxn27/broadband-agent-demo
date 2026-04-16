@@ -78,6 +78,14 @@ function rebuildBlocks(m: Message): MessageBlock[] {
     }
     blocks.push({ type: 'step', stepId: step.stepId });
   }
+  // experience_assurance 卡片在流式中于 steps 完成后、Orchestrator 总结文本之前到达，
+  // 历史重建保持相同顺序：steps → experience_assurance → text
+  for (const rb of m.renderBlocks ?? []) {
+    if (rb.renderType === 'experience_assurance') {
+      blocks.push({ type: 'experience_assurance', data: rb.renderData });
+    }
+  }
+
   if (m.content?.trim()) {
     blocks.push({ type: 'text', content: m.content });
   }
@@ -94,13 +102,6 @@ function rebuildBlocks(m: Message): MessageBlock[] {
       content: (reportRB.renderData as { markdownReport: string }).markdownReport,
       charts: allCharts,
     });
-  }
-
-  // 从 renderBlocks 重建 experience_assurance block（历史回放）
-  for (const rb of m.renderBlocks ?? []) {
-    if (rb.renderType === 'experience_assurance') {
-      blocks.push({ type: 'experience_assurance', data: rb.renderData });
-    }
   }
 
   return blocks;
