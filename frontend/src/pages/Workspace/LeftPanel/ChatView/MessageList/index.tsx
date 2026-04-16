@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { Empty, Skeleton } from 'antd';
 import type { Message } from '@/types/message';
 import type { ChartItem } from '@/types/render';
@@ -22,15 +22,55 @@ interface Props {
   hideInsightPanel?: boolean;
 }
 
+// 距底部多少 px 以内视为"在底部"
+const NEAR_BOTTOM_THRESHOLD = 80;
+
 function MessageList({ messages, loading, isStreaming, onEditMessage, onViewReport, hideInsightPanel }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  // 用户是否主动向上滚动离开了底部
+  const userScrolledUpRef = useRef(false);
+  // 记录消息数量，用于判断是否新增了消息（切换会话 / 发送新消息 → 强制回底）
+  const prevMsgCountRef = useRef(messages.length);
 
+  const isNearBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_THRESHOLD;
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, []);
+
+  // 监听用户手动滚动
   useEffect(() => {
     const el = scrollRef.current;
-    if (el) {
-      el.scrollTop = el.scrollHeight;
+    if (!el) return;
+    const onScroll = () => {
+      userScrolledUpRef.current = !isNearBottom();
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [isNearBottom]);
+
+  useEffect(() => {
+    const msgCount = messages.length;
+    const prevCount = prevMsgCountRef.current;
+    prevMsgCountRef.current = msgCount;
+
+    // 新增了消息（用户发送 / 切换会话）→ 无条件滚到底并重置标志
+    if (msgCount > prevCount) {
+      userScrolledUpRef.current = false;
+      scrollToBottom();
+      return;
     }
-  }, [messages, isStreaming]);
+
+    // 流式更新中：用户没有向上滚 → 持续跟随底部
+    if (isStreaming && !userScrolledUpRef.current) {
+      scrollToBottom();
+    }
+  }, [messages, isStreaming, scrollToBottom]);
 
   if (loading) {
     return (
