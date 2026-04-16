@@ -88,10 +88,12 @@ interface SimulationState {
   _lastSegType: string;
   _eventSeq: number;
 
+  pendingFaultName: string;
+
   // ── actions ──
   addUserEvent: (text: string) => void;
   addSystemEvent: (text: string) => void;
-  startSimulation: (convId: string) => Promise<void>;
+  startSimulation: (convId: string, faultName?: string) => Promise<void>;
   injectFault: (convId: string, faultName: string) => Promise<void>;
   remediate: () => Promise<void>;
   reset: () => void;
@@ -125,6 +127,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   summaries: [],
   convId: null,
   currentFaultName: '',
+  pendingFaultName: '',
   simEvents: [],
   _abortCtrl: null,
   _lastSegType: '',
@@ -144,9 +147,12 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     }));
   },
 
-  startSimulation: async (convId: string) => {
+  startSimulation: async (convId: string, faultName?: string) => {
     get()._abortCtrl?.abort();
     const ctrl = new AbortController();
+    const startText = faultName
+      ? `仿真已启动，正在运行基线段（后台计算中，请稍候）...（基线完成后将自动注入故障：${faultName}）`
+      : '仿真已启动，正在运行基线段（后台计算中，请稍候）...';
     set((s) => ({
       active: true,
       streaming: true,
@@ -156,11 +162,12 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       segments: [],
       summaries: [],
       currentFaultName: '',
+      pendingFaultName: faultName ?? '',
       _abortCtrl: ctrl,
       _lastSegType: '',
       simEvents: [
         ...s.simEvents,
-        { id: `sim-${s._eventSeq + 1}`, kind: 'system' as const, text: '仿真已启动，正在运行基线段（后台计算中，请稍候）...' },
+        { id: `sim-${s._eventSeq + 1}`, kind: 'system' as const, text: startText },
       ],
       _eventSeq: s._eventSeq + 1,
     }));
@@ -353,6 +360,7 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
       summaries: [],
       convId: null,
       currentFaultName: '',
+      pendingFaultName: '',
       simEvents: [],
       _abortCtrl: null,
       _lastSegType: '',
@@ -406,6 +414,11 @@ function _handleSegEnd(payload: SimSegEndPayload): void {
     const seq = s._eventSeq;
 
     if (payload.segType === 'baseline') {
+      const { pendingFaultName, convId } = s;
+      if (pendingFaultName && convId) {
+        setTimeout(() => { void useSimulationStore.getState().injectFault(convId, pendingFaultName); }, 0);
+        return { summaries, streaming: false, pendingFaultName: '', _eventSeq: seq };
+      }
       return { summaries, streaming: false, _eventSeq: seq };
     }
 
